@@ -165,3 +165,11 @@ The result is a platform that was engineered to **degrade gracefully instead of 
 ---
 
 *Prepared 2026-07-09 from the internal system report and project index. Infrastructure identifiers, credentials, proprietary scoring methodology, and personal data are deliberately omitted.*
+
+---
+
+## License
+
+Copyright © 2026 Teejay Graham.
+
+The text and images in this repository are licensed under the **Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License (CC BY-NC-ND 4.0)** — you may share this work with attribution, for non-commercial purposes, without modifications. Full terms in [LICENSE](LICENSE); summary at <https://creativecommons.org/licenses/by-nc-nd/4.0/>.
