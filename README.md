@@ -57,6 +57,9 @@ A few numbers that tend to prompt the follow-up questions:
 - Drafts, edits, and *versions* research reports as new information arrives — reports are living documents, not one-shot outputs.
 - Renders finished reports to portable formats (PDF/DOCX) through a containerized rendering service and distributes them on demand or on a schedule.
 
+**Live demo — scorecard viewer**
+- A sanitized, single-file HTML viewer for the scoring pipeline's output lives in [`demo/investment-scorecard.html`](demo/investment-scorecard.html). It is a bring-your-own-backend static page: point it at your own webhook endpoint and it renders the full category scorecard, weighted-contribution and radar charts, raw metrics, and risk flags. No endpoints, credentials, or proprietary scoring data are embedded.
+
 **Automation & delivery**
 - Runs most of its work unattended on schedules, and packages finished output as automatically delivered "vertical" products. *(Covered in depth in the next section.)*
 
