@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Equity Scorecard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0C0E12;
+  --bg2:      #131620;
+  --bg3:      #1A1E2A;
+  --bg4:      #222736;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.12);
+  --ink:      #E8EAF0;
+  --ink2:     #8B91A8;
+  --ink3:     #555C73;
+  --gold:     #C8A84B;
+  --gold2:    #F0D080;
+  --gold-bg:  rgba(200,168,75,0.1);
+  --teal:     #4BBFBF;
+  --teal-bg:  rgba(75,191,191,0.08);
+  --red:      #E05A5A;
+  --red-bg:   rgba(224,90,90,0.1);
+  --amber:    #E09A3A;
+  --amber-bg: rgba(224,154,58,0.1);
+  --green:    #5ABF8A;
+  --green-bg: rgba(90,191,138,0.1);
+  --blue:     #5A8AE0;
+  --blue-bg:  rgba(90,138,224,0.1);
+  --radius:   8px;
+  --glass:        rgba(19,22,32,0.62);
+  --glass-border: rgba(255,255,255,0.09);
+  --gold-glow:    rgba(200,168,75,0.3);
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'Fraunces', serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+body { font-family: var(--font-body); background: var(--bg); color: var(--ink); min-height: 100vh; font-size: 15px; }
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 60% 40% at 50% -10%, rgba(200,168,75,0.08), transparent 60%),
+    radial-gradient(ellipse 40% 30% at 85% 100%, rgba(75,191,191,0.05), transparent 60%),
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+}
+
+/* HEADER */
+.header {
+  border-bottom: 1px solid var(--border);
+  padding: 1.5rem 2.5rem;
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+  background: linear-gradient(180deg, rgba(200,168,75,0.04) 0%, transparent 100%);
+}
+.header-left { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+.header-title { font-family: var(--font-head); font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
+.header-title span { color: var(--gold); }
+.header-sub { font-family: var(--font-mono); font-size: 0.65rem; color: var(--ink3); letter-spacing: 0.08em; text-transform: uppercase; }
+.rubric-tag { font-family: var(--font-mono); font-size: 0.6rem; padding: 3px 9px; border: 1px solid var(--gold); color: var(--gold); border-radius: 999px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* LAYOUT */
+.app { display: grid; grid-template-columns: 300px 1fr; min-height: calc(100vh - 65px); }
+
+/* SIDEBAR */
+.sidebar { border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; max-height: calc(100vh - 65px); position: sticky; top: 0; }
+.sidebar-section { padding: 1.1rem 1.4rem; border-bottom: 1px solid var(--border); }
+.sidebar-section:last-child { border-bottom: none; }
+.section-label { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); margin-bottom: 0.7rem; }
+
+.webhook-input { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius); padding: 7px 10px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink); outline: none; margin-bottom: 6px; }
+.webhook-input:focus { border-color: var(--gold); }
+.webhook-input::placeholder { color: var(--ink3); }
+.ticker-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.ticker-input { width: 90px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius); padding: 7px 10px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--gold); outline: none; text-transform: uppercase; letter-spacing: 0.05em; }
+.ticker-input:focus { border-color: var(--gold); }
+.ticker-input::placeholder { color: var(--ink3); text-transform: none; }
+.ticker-select { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius); padding: 7px 10px; font-family: var(--font-mono); font-size: 0.78rem; color: var(--gold); outline: none; margin-bottom: 6px; cursor: pointer; }
+.ticker-select:focus { border-color: var(--gold); }
+.ticker-select option { background: var(--bg3); color: var(--ink); }
+.watchlist-url-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.watchlist-url-row label { font-family: var(--font-mono); font-size: 0.58rem; color: var(--ink3); white-space: nowrap; }
+.btn { padding: 7px 14px; border-radius: var(--radius); font-family: var(--font-mono); font-size: 0.68rem; cursor: pointer; border: 1px solid var(--border2); background: var(--bg3); color: var(--ink2); letter-spacing: 0.03em; transition: all 0.15s; white-space: nowrap; }
+.btn:hover { background: var(--bg4); color: var(--ink); }
+.btn.primary { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 500; }
+.btn.primary:hover { background: var(--gold2); border-color: var(--gold2); }
+.fetch-status { font-family: var(--font-mono); font-size: 0.63rem; margin-top: 4px; min-height: 15px; letter-spacing: 0.03em; }
+.fetch-status.ok   { color: var(--green); }
+.fetch-status.err  { color: var(--red); }
+.fetch-status.info { color: var(--ink3); }
+
+/* Sidebar score block */
+.conviction-block { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem 1rem; margin-bottom: 0.6rem; }
+.conviction-score { font-family: var(--font-head); font-size: 2.6rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; }
+.conviction-score-max { font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink3); margin-left: 4px; }
+.conviction-level { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; font-weight: 500; }
+.conviction-action { font-family: var(--font-mono); font-size: 0.6rem; color: var(--ink3); margin-top: 3px; letter-spacing: 0.04em; }
+.score-breakdown { display: flex; gap: 6px; margin-top: 8px; }
+.score-part { flex: 1; background: var(--bg4); border-radius: 4px; padding: 5px 7px; }
+.score-part .sp-lbl { font-family: var(--font-mono); font-size: 0.56rem; color: var(--ink3); letter-spacing: 0.05em; text-transform: uppercase; }
+.score-part .sp-val { font-family: var(--font-mono); font-size: 0.82rem; font-weight: 500; color: var(--ink); margin-top: 2px; }
+
+/* Confidence */
+.confidence-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+.confidence-lbl { font-family: var(--font-mono); font-size: 0.63rem; color: var(--ink3); }
+.confidence-val { font-family: var(--font-mono); font-size: 0.7rem; color: var(--teal); }
+.confidence-bar-wrap { background: var(--bg4); border-radius: 999px; height: 4px; margin-top: 5px; overflow: hidden; }
+.confidence-bar-fill { height: 100%; border-radius: 999px; background: var(--teal); transition: width 0.4s ease; }
+
+/* Config list */
+.config-list { max-height: 130px; overflow-y: auto; }
+.config-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); gap: 8px; cursor: pointer; }
+.config-item:last-child { border-bottom: none; }
+.cfg-name { font-family: var(--font-mono); font-size: 0.66rem; color: var(--ink2); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.15s; }
+.config-item:hover .cfg-name { color: var(--gold); }
+.cfg-actions { display: flex; gap: 4px; }
+.cfg-btn { padding: 2px 6px; font-family: var(--font-mono); font-size: 0.58rem; border: 1px solid var(--border2); border-radius: 3px; background: transparent; color: var(--ink3); cursor: pointer; transition: all 0.12s; }
+.cfg-btn:hover { background: var(--bg4); color: var(--ink); }
+.cfg-btn.del:hover { color: var(--red); border-color: var(--red); }
+.configs-empty { font-family: var(--font-mono); font-size: 0.63rem; color: var(--ink3); text-align: center; padding: 0.6rem 0; }
+.config-actions { display: flex; gap: 6px; margin-top: 7px; }
+.config-actions .btn { flex: 1; font-size: 0.6rem; padding: 5px 7px; text-align: center; }
+
+/* MAIN PANEL */
+.main-panel { padding: 1.75rem 2rem 4rem; overflow-y: auto; }
+
+/* ① IDENTITY BAR */
+.identity-bar { display: flex; align-items: flex-start; gap: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); }
+.identity-ticker { font-family: var(--font-head); font-size: 2.8rem; font-weight: 800; color: var(--gold); letter-spacing: -0.02em; line-height: 1; }
+.identity-info { flex: 1; }
+.identity-name { font-family: var(--font-body); font-style: italic; font-size: 1rem; color: var(--ink2); margin-bottom: 5px; }
+.identity-date { font-family: var(--font-mono); font-size: 0.63rem; color: var(--ink3); letter-spacing: 0.04em; margin-bottom: 8px; }
+.source-badges { display: flex; gap: 5px; flex-wrap: wrap; }
+.source-badge { font-family: var(--font-mono); font-size: 0.58rem; padding: 2px 8px; border-radius: 999px; letter-spacing: 0.04em; text-transform: uppercase; }
+.source-badge.sec    { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(90,138,224,0.3); }
+.source-badge.market { background: var(--teal-bg); color: var(--teal); border: 1px solid rgba(75,191,191,0.3); }
+.source-badge.av     { background: var(--gold-bg); color: var(--gold); border: 1px solid rgba(200,168,75,0.3); }
+.source-badge.calc   { background: var(--green-bg); color: var(--green); border: 1px solid rgba(90,191,138,0.3); }
+.source-badge.other  { background: var(--bg4); color: var(--ink3); border: 1px solid var(--border2); }
+.identity-confidence { text-align: right; min-width: 120px; }
+.conf-pct { font-family: var(--font-head); font-size: 1.5rem; font-weight: 700; color: var(--teal); }
+.conf-label { font-family: var(--font-mono); font-size: 0.6rem; color: var(--ink3); margin-top: 2px; letter-spacing: 0.04em; }
+
+/* ② VERDICT */
+.verdict-section { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap; }
+.verdict-score-block { }
+.verdict-score-num { font-family: var(--font-head); font-size: 3.5rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; }
+.verdict-score-denom { font-family: var(--font-mono); font-size: 1rem; color: var(--ink3); }
+.verdict-conviction { font-family: var(--font-mono); font-size: 0.8rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 5px; }
+.verdict-action { font-family: var(--font-mono); font-size: 0.62rem; color: var(--ink3); margin-top: 3px; letter-spacing: 0.04em; }
+.verdict-divider { width: 1px; background: var(--border); align-self: stretch; }
+.verdict-rationale { flex: 1; }
+.verdict-rationale-label { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
+.verdict-rationale-text { font-family: var(--font-body); font-style: italic; font-size: 0.9rem; color: var(--ink2); line-height: 1.6; }
+.ai-assessment { display: flex; flex-direction: column; gap: 0.6rem; }
+.ai-cat-row { display: flex; flex-direction: column; gap: 3px; padding: 0.5rem 0.7rem; background: var(--bg3); border-radius: 6px; border-left: 2px solid var(--border2); }
+.ai-cat-header { display: flex; align-items: center; gap: 8px; }
+.ai-cat-name { font-family: var(--font-mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink2); flex: 1; }
+.ai-cat-score { font-family: var(--font-head); font-size: 0.95rem; font-weight: 700; line-height: 1; }
+.ai-cat-criteria { font-family: var(--font-mono); font-size: 0.58rem; color: var(--ink3); line-height: 1.5; padding-left: 2px; }
+.ai-addendum { font-family: var(--font-body); font-style: italic; font-size: 0.85rem; color: var(--ink2); line-height: 1.6; padding-top: 0.4rem; border-top: 1px solid var(--border); margin-top: 0.2rem; }
+.filing-context-section { margin-top: 0.8rem; border-top: 1px solid var(--border); padding-top: 0.7rem; }
+.filing-context-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; cursor: pointer; user-select: none; }
+.filing-context-label { font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); }
+.filing-context-toggle { font-family: var(--font-mono); font-size: 0.58rem; color: var(--ink3); padding: 2px 7px; border: 1px solid var(--border2); border-radius: 3px; background: transparent; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.filing-context-toggle:hover { color: var(--ink); border-color: var(--gold); }
+.filing-context-body { display: none; }
+.filing-context-body.open { display: block; }
+.filing-stream { margin-bottom: 0.9rem; }
+.filing-stream:last-child { margin-bottom: 0; }
+.filing-stream-label { font-family: var(--font-mono); font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3); margin-bottom: 0.35rem; opacity: 0.7; }
+.filing-chunk { background: var(--bg3); border-radius: 5px; padding: 0.55rem 0.75rem; margin-bottom: 0.4rem; border-left: 2px solid var(--border2); }
+.filing-chunk:last-child { margin-bottom: 0; }
+.filing-chunk-title { font-family: var(--font-mono); font-size: 0.58rem; color: var(--gold); margin-bottom: 4px; letter-spacing: 0.02em; }
+.filing-chunk-body { font-family: var(--font-body); font-size: 0.78rem; color: var(--ink2); line-height: 1.55; }
+.verdict-score-parts { display: flex; gap: 8px; margin-top: 10px; }
+.vsp { background: var(--bg3); border-radius: 4px; padding: 5px 10px; }
+.vsp-lbl { font-family: var(--font-mono); font-size: 0.56rem; color: var(--ink3); letter-spacing: 0.05em; text-transform: uppercase; }
+.vsp-val { font-family: var(--font-mono); font-size: 0.85rem; font-weight: 500; color: var(--ink); margin-top: 2px; }
+
+/* ③ CATEGORY SCORECARD */
+.section-header { font-family: var(--font-head); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink2); margin-bottom: 1rem; }
+.categories-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 0.9rem; margin-bottom: 1.5rem; }
+.category-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.cat-header { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); }
+.cat-name { font-family: var(--font-head); font-size: 0.76rem; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
+.cat-weight { font-family: var(--font-mono); font-size: 0.6rem; color: var(--ink3); }
+.cat-score-row { padding: 0.8rem 1rem 0.4rem; display: flex; align-items: center; gap: 10px; }
+.cat-score-display { font-family: var(--font-head); font-size: 1.8rem; font-weight: 800; line-height: 1; min-width: 38px; }
+.cat-score-denom { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink3); align-self: flex-end; margin-bottom: 3px; }
+.cat-bar-wrap { padding: 0 1rem 0.6rem; }
+.cat-bar-track { height: 3px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+.cat-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s ease; }
+.cat-bottom { padding: 0.3rem 1rem 0.6rem; display: flex; justify-content: space-between; align-items: center; }
+.cat-label { font-family: var(--font-mono); font-size: 0.63rem; letter-spacing: 0.04em; }
+.cat-weighted { font-family: var(--font-mono); font-size: 0.66rem; color: var(--ink2); }
+.cat-weighted span { color: var(--gold); }
+.criteria-list { padding: 0 1rem 0.7rem; display: flex; flex-direction: column; gap: 3px; border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: 0.2rem; }
+.criterion-row { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.crit-metric { font-family: var(--font-mono); font-size: 0.58rem; color: var(--ink3); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.crit-value { font-family: var(--font-mono); font-size: 0.6rem; color: var(--ink2); white-space: nowrap; }
+.crit-score-badge { font-family: var(--font-mono); font-size: 0.58rem; padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
+
+/* Charts */
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.chart-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.2rem 1.2rem; }
+.chart-card-title { font-family: var(--font-head); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink2); margin-bottom: 0.9rem; }
+.chart-wrap { position: relative; height: 200px; }
+
+/* ④ SCORE BREAKDOWN */
+.breakdown-section { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin-bottom: 1.5rem; }
+.breakdown-cell { text-align: center; }
+.breakdown-cell .bc-name { font-family: var(--font-mono); font-size: 0.56rem; color: var(--ink3); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.breakdown-cell .bc-score { font-family: var(--font-head); font-size: 1.3rem; font-weight: 700; line-height: 1; }
+.breakdown-cell .bc-denom { font-family: var(--font-mono); font-size: 0.55rem; color: var(--ink3); }
+.breakdown-cell .bc-contrib { font-family: var(--font-mono); font-size: 0.58rem; color: var(--ink3); margin-top: 2px; }
+.breakdown-result { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+.breakdown-total { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink3); }
+.breakdown-total strong { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; color: var(--gold); margin-right: 3px; }
+.breakdown-pill { font-family: var(--font-mono); font-size: 0.7rem; padding: 3px 12px; border-radius: 999px; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 500; }
+
+/* ⑤ RAW METRICS */
+.metrics-section { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 1.5rem; overflow: hidden; }
+.metrics-header { padding: 1rem 1.25rem 0; border-bottom: 1px solid var(--border); }
+.metrics-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 8px; }
+.metrics-search { background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius); padding: 5px 10px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink); outline: none; width: 200px; }
+.metrics-search:focus { border-color: var(--gold); }
+.metrics-search::placeholder { color: var(--ink3); }
+.metrics-filter-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding-bottom: 0.75rem; }
+.filter-label { font-family: var(--font-mono); font-size: 0.58rem; color: var(--ink3); letter-spacing: 0.06em; text-transform: uppercase; margin-right: 4px; }
+.metrics-tabs { display: flex; gap: 0; overflow-x: auto; }
+.metrics-tab { font-family: var(--font-mono); font-size: 0.62rem; padding: 8px 14px; border: none; background: transparent; color: var(--ink3); cursor: pointer; letter-spacing: 0.04em; text-transform: uppercase; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+.metrics-tab:hover { color: var(--ink2); }
+.metrics-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.metrics-body { padding: 1rem 1.25rem; }
+.metrics-table { width: 100%; border-collapse: collapse; }
+.metrics-table th { font-family: var(--font-mono); font-size: 0.58rem; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+.metrics-table td { font-family: var(--font-mono); font-size: 0.68rem; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.metrics-table tr:last-child td { border-bottom: none; }
+.metrics-table tr:hover td { background: var(--bg3); }
+.metric-name { color: var(--ink2); }
+.metric-value { color: var(--ink); font-weight: 500; }
+.metric-null { color: var(--ink3); font-style: italic; }
+.metrics-empty { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink3); text-align: center; padding: 2rem; font-style: italic; }
+
+/* ⑥ RISK FLAGS */
+.risk-section { margin-bottom: 1.5rem; }
+.risk-flag { display: flex; gap: 8px; padding: 8px 10px; border-radius: 4px; margin-bottom: 6px; align-items: flex-start; }
+.risk-flag:last-child { margin-bottom: 0; }
+.risk-flag.high   { background: var(--red-bg);   border-left: 2px solid var(--red); }
+.risk-flag.medium { background: var(--amber-bg); border-left: 2px solid var(--amber); }
+.risk-flag.low    { background: var(--teal-bg);  border-left: 2px solid var(--teal); }
+.rf-sev { font-family: var(--font-mono); font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; padding-top: 1px; }
+.risk-flag.high   .rf-sev { color: var(--red); }
+.risk-flag.medium .rf-sev { color: var(--amber); }
+.risk-flag.low    .rf-sev { color: var(--teal); }
+.rf-text { font-family: var(--font-mono); font-size: 0.65rem; color: var(--ink2); line-height: 1.4; }
+.no-flags { font-family: var(--font-mono); font-size: 0.65rem; color: var(--ink3); font-style: italic; }
+
+/* EMPTY STATE */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; text-align: center; gap: 1rem; }
+.empty-icon { font-size: 3rem; opacity: 0.2; }
+.empty-title { font-family: var(--font-head); font-size: 1.2rem; font-weight: 600; color: var(--ink2); }
+.empty-sub { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink3); max-width: 300px; line-height: 1.6; letter-spacing: 0.02em; }
+
+/* CONVICTION COLORS */
+.conviction-high      { color: var(--green); }
+.conviction-medium    { color: var(--teal); }
+.conviction-low       { color: var(--amber); }
+.conviction-watchlist { color: var(--red); }
+.conviction-avoid     { color: #888; }
+.pill-high      { background: var(--green-bg); color: var(--green); }
+.pill-medium    { background: var(--teal-bg);  color: var(--teal); }
+.pill-low       { background: var(--amber-bg); color: var(--amber); }
+.pill-watchlist { background: var(--red-bg);   color: var(--red); }
+.pill-avoid     { background: var(--bg4);      color: var(--ink3); }
+
+/* Score colors */
+.score-5 { color: var(--green); } .score-4 { color: var(--teal); } .score-3 { color: var(--gold); } .score-2 { color: var(--amber); } .score-1 { color: var(--red); } .score-0 { color: var(--ink3); }
+.bar-5 { background: var(--green); } .bar-4 { background: var(--teal); } .bar-3 { background: var(--gold); } .bar-2 { background: var(--amber); } .bar-1 { background: var(--red); } .bar-0 { background: var(--ink3); }
+.badge-5 { background: var(--green-bg); color: var(--green); } .badge-4 { background: var(--teal-bg); color: var(--teal); } .badge-3 { background: var(--gold-bg); color: var(--gold); } .badge-2 { background: var(--amber-bg); color: var(--amber); } .badge-1 { background: var(--red-bg); color: var(--red); } .badge-0 { background: var(--bg4); color: var(--ink3); }
+
+/* ══ FUTURIST REFRESH (overrides — keep after base rules) ══ */
+
+/* Glass panels */
+.conviction-block, .verdict-section, .category-card, .chart-card,
+.breakdown-section, .metrics-section {
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+}
+.category-card, .chart-card { transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.category-card:hover, .chart-card:hover {
+  border-color: rgba(200,168,75,0.28);
+  box-shadow: 0 0 24px rgba(200,168,75,0.06);
+}
+
+/* HUD corner brackets — signature element, verdict panel only */
+.verdict-section { position: relative; }
+.verdict-section::before, .verdict-section::after {
+  content: ''; position: absolute; width: 16px; height: 16px; pointer-events: none;
+}
+.verdict-section::before { top: -1px; left: -1px; border-top: 1px solid var(--gold); border-left: 1px solid var(--gold); border-top-left-radius: var(--radius); }
+.verdict-section::after  { bottom: -1px; right: -1px; border-bottom: 1px solid var(--gold); border-right: 1px solid var(--gold); border-bottom-right-radius: var(--radius); }
+
+/* Luminance on key readouts */
+.identity-ticker { text-shadow: 0 0 24px var(--gold-glow); }
+.verdict-score-num, .conviction-score { text-shadow: 0 0 20px; }
+.btn.primary { box-shadow: 0 0 14px rgba(200,168,75,0.22); }
+.btn.primary:hover { box-shadow: 0 0 20px rgba(200,168,75,0.35); }
+.confidence-bar-fill { box-shadow: 0 0 8px rgba(75,191,191,0.5); }
+
+/* Focus treatment */
+.webhook-input:focus, .ticker-input:focus, .ticker-select:focus, .metrics-search:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold-glow), 0 0 12px rgba(200,168,75,0.15);
+}
+:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; }
+
+/* Section headers get a fading rule line */
+.section-header { display: flex; align-items: center; gap: 10px; }
+.section-header::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border2), transparent); }
+
+/* Metrics table scrolls horizontally instead of crushing on narrow screens */
+.metrics-body { overflow-x: auto; }
+.metrics-table { min-width: 480px; }
+
+/* Sticky mobile scorebar (hidden until scrolled, <=960px only) */
+.mobile-scorebar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  display: none; align-items: center; gap: 12px;
+  padding: 10px 16px;
+  background: rgba(12,14,18,0.82);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--glass-border);
+  transform: translateY(-100%); transition: transform 0.25s ease;
+}
+.mobile-scorebar.visible { transform: translateY(0); }
+.msb-ticker { font-family: var(--font-head); font-weight: 800; font-size: 1rem; color: var(--gold); letter-spacing: 0.02em; }
+.msb-level  { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.msb-score  { font-family: var(--font-mono); font-size: 0.95rem; font-weight: 500; margin-left: auto; }
+
+@media (max-width: 960px) {
+  .mobile-scorebar { display: flex; }
+  /* Collapsible sidebar sections so config doesn't bury the scorecard */
+  .sidebar-section .section-label { cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+  .sidebar-section .section-label::after { content: '\2212'; font-size: 0.85rem; color: var(--ink3); }
+  .sidebar-section.collapsed .section-label { margin-bottom: 0; }
+  .sidebar-section.collapsed .section-label::after { content: '+'; }
+  .sidebar-section.collapsed > *:not(.section-label) { display: none; }
+}
+@media (max-width: 600px) {
+  /* Touch targets + scale-down of oversized display type */
+  .btn, .ticker-input, .webhook-input, .ticker-select { min-height: 44px; }
+  .ticker-select, .webhook-input { font-size: 0.8rem; }
+  .identity-ticker { font-size: 2.2rem; }
+  .verdict-score-num { font-size: 2.8rem; }
+  .verdict-section { padding: 1rem 1.1rem; gap: 1.25rem; }
+  .chart-wrap { height: 180px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+@media (max-width: 960px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { max-height: none; position: static; border-right: none; border-bottom: 1px solid var(--border); }
+  .charts-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .header { padding: 1rem 1.25rem; }
+  .main-panel { padding: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-title">Equity <span>Scorecard</span></div>
+
+  </div>
+
+</div>
+
+<div class="mobile-scorebar" id="mobile-scorebar">
+  <span class="msb-ticker" id="msb-ticker">—</span>
+  <span class="msb-level" id="msb-level"></span>
+  <span class="msb-score" id="msb-score">—</span>
+</div>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="section-label">Data Source</div>
+      <div style="display:flex; gap:6px; margin-bottom:6px;">
+        <select class="ticker-select" id="ticker-select" style="margin-bottom:0; flex:1;">
+          <option value="">— Enter data service URL below —</option>
+        </select>
+        <button class="btn" id="btn-reload-watchlist" title="Reload watchlist" style="padding:7px 10px;">⟳</button>
+      </div>
+      <div class="ticker-row">
+        <input type="text" class="ticker-input" id="ticker-input" placeholder="or type ticker" maxlength="10" style="flex:1;">
+        <button class="btn primary" id="btn-fetch">Fetch</button>
+      </div>
+      <input type="text" class="webhook-input" id="webhook-url" value="" placeholder="https://your-data-service.io/webhook/scorecard">
+      <div class="tier-toggle" style="display:flex;gap:6px;margin-bottom:6px">
+        <label style="flex:1;display:flex;align-items:center;gap:4px;font-size:0.7rem;color:var(--ink2);cursor:pointer">
+          <input type="radio" name="report-tier" id="tier-free" value="free" checked> Free
+        </label>
+        <label style="flex:1;display:flex;align-items:center;gap:4px;font-size:0.7rem;color:var(--ink2);cursor:pointer">
+          <input type="radio" name="report-tier" id="tier-paid" value="paid"> Paid
+        </label>
+      </div>
+      <div class="fetch-status info" id="fetch-status">Select or type a ticker to load</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Final Score</div>
+      <div class="conviction-block">
+        <div>
+          <span class="conviction-score" id="sidebar-score">—</span>
+          <span class="conviction-score-max" id="sidebar-score-max"></span>
+        </div>
+        <div class="conviction-level" id="sidebar-level">—</div>
+        <div class="conviction-action" id="sidebar-action">—</div>
+        <div class="score-breakdown">
+          <div class="score-part"><div class="sp-lbl">Final Score</div><div class="sp-val" id="sb-final">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Data Coverage</div>
+      <div class="confidence-row">
+        <span class="confidence-lbl">Coverage score</span>
+        <span class="confidence-val" id="conf-val">—</span>
+      </div>
+      <div class="confidence-bar-wrap"><div class="confidence-bar-fill" id="conf-bar" style="width:0%"></div></div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--ink3);margin-top:4px" id="conf-level">—</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Saved Configurations</div>
+      <div class="config-list" id="config-list">
+        <div class="configs-empty">No saved configurations yet.</div>
+      </div>
+      <div class="config-actions">
+        <button class="btn" id="btn-export" style="font-size:0.6rem">Export</button>
+        <label class="btn" style="font-size:0.6rem;cursor:pointer">Import<input type="file" id="import-input" accept=".json" style="display:none"></label>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAIN PANEL -->
+  <div class="main-panel" id="main-panel">
+
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">◈</div>
+      <div class="empty-title">No scorecard loaded</div>
+      <div class="empty-sub">Enter your service URL and a ticker in the sidebar to load a live scorecard.</div>
+    </div>
+
+    <div id="scorecard-content" style="display:none">
+
+      <!-- ① IDENTITY BAR -->
+      <div class="identity-bar">
+        <div class="identity-ticker" id="asset-ticker">—</div>
+        <div class="identity-info">
+          <div class="identity-name" id="asset-name"></div>
+          <div class="identity-date" id="asset-date"></div>
+          <div class="source-badges" id="source-badges"></div>
+        </div>
+        <div class="identity-confidence">
+          <div class="conf-pct" id="id-conf-pct">—</div>
+          <div class="conf-label">Data Coverage</div>
+          <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--ink3);margin-top:2px" id="id-conf-label">—</div>
+        </div>
+      </div>
+
+      <!-- ② VERDICT -->
+      <div class="verdict-section">
+        <div class="verdict-score-block">
+          <div>
+            <span class="verdict-score-num" id="v-score">—</span>
+            <span class="verdict-score-denom"> / 5.0</span>
+          </div>
+          <div class="verdict-conviction" id="v-conviction">—</div>
+          <div class="verdict-action" id="v-action">—</div>
+
+        </div>
+        <div class="verdict-divider"></div>
+        <div class="verdict-rationale">
+          <div class="verdict-rationale-label">Latest Research Report</div>
+          <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--ink3);margin-bottom:6px" id="v-report-date"></div>
+          <div class="verdict-rationale-text" id="v-rationale">No report available yet for this ticker.</div>
+        </div>
+      </div>
+
+      <!-- ③ CATEGORY SCORECARD -->
+      <div class="section-header">Category Scorecard</div>
+      <div class="categories-grid" id="categories-grid"></div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-card-title">Weighted Contributions</div>
+          <div class="chart-wrap"><canvas id="bar-chart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">Category Radar</div>
+          <div class="chart-wrap"><canvas id="radar-chart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ④ SCORE BREAKDOWN -->
+      <div class="section-header">Score Breakdown</div>
+      <div class="breakdown-section">
+        <div class="breakdown-result">
+          <div class="breakdown-total">
+            Final Score <strong id="bd-final">—</strong> / 5.0
+          </div>
+          <span class="breakdown-pill" id="bd-pill">—</span>
+        </div>
+      </div>
+
+      <!-- ⑤ RAW METRICS -->
+      <div class="section-header">Raw Metrics</div>
+      <div class="metrics-section">
+        <div class="metrics-header">
+          <div class="metrics-title-row">
+            <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--ink3)">All metrics from latest scorecard run</div>
+            <input type="text" class="metrics-search" id="metrics-search" placeholder="Search metrics…">
+          </div>
+          <div class="metrics-filter-row">
+            <span class="filter-label">Filter:</span>
+          </div>
+          <div class="metrics-tabs" id="metrics-tabs"></div>
+        </div>
+        <div class="metrics-body">
+          <table class="metrics-table">
+            <thead><tr><th>Metric</th><th>Value</th><th>Status</th></tr></thead>
+            <tbody id="metrics-tbody"></tbody>
+          </table>
+          <div class="metrics-empty" id="metrics-empty" style="display:none">No metrics match your search.</div>
+        </div>
+      </div>
+
+      <!-- ⑥ RISK FLAGS -->
+      <div class="section-header">Risk Flags</div>
+      <div class="risk-section" id="risk-flags-main"></div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── RUBRIC CONSTANTS ──
+const CATEGORY_WEIGHTS = {
+  valuation: 0.18, profitability: 0.19, growth: 0.15,
+  financial_health: 0.15, competitive_position: 0.18,
+  management_quality: 0.10, technicals: 0.05,
+};
+const CATEGORY_LABELS = {
+  valuation: 'Valuation', profitability: 'Profitability', growth: 'Growth',
+  financial_health: 'Fin. Health', competitive_position: 'Competitive',
+  management_quality: 'Management', technicals: 'Technicals',
+};
+const SCORE_LABELS = ['Severe','Poor','Weak','Adequate','Strong','Excellent'];
+const CONVICTION_THRESHOLDS = [
+  { key: 'high',      min: 4.0, max: 5.0, label: 'High Conviction',  actions: ['Accumulate on weakness','Monitor for entry'] },
+  { key: 'medium',    min: 3.0, max: 3.99, label: 'Medium Conviction', actions: ['Hold','Monitor for entry'] },
+  { key: 'low',       min: 2.0, max: 2.9, label: 'Low Conviction',    actions: ['Hold','Reduce'] },
+  { key: 'watchlist', min: 1.0, max: 1.9, label: 'Watchlist',         actions: ['Reduce','Avoid'] },
+  { key: 'avoid',     min: 0.0, max: 0.9, label: 'Avoid',             actions: ['Avoid'] },
+];
+const CONFIDENCE_LEVELS = [
+  { min: 0.90, label: 'Strong coverage' },
+  { min: 0.75, label: 'Sufficient coverage' },
+  { min: 0.50, label: 'Limited coverage' },
+  { min: 0.00, label: 'Insufficient coverage' },
+];
+
+// Metric tab definitions — what sections map to which tab
+const METRIC_TABS = [
+  { key: 'all_metrics',          label: 'All Metrics' },
+  { key: 'valuation',            label: 'Valuation' },
+  { key: 'profitability',        label: 'Profitability' },
+  { key: 'growth',               label: 'Growth' },
+  { key: 'financial_health',     label: 'Financial Health' },
+  { key: 'cash_flow',            label: 'Cash Flow' },
+  { key: 'competitive_position', label: 'Competitive' },
+  { key: 'management_quality',   label: 'Management' },
+  { key: 'technicals_indicators',label: 'Technicals' },
+  { key: 'price_points',         label: 'Price Points' },
+];
+
+// Human-readable metric labels
+const METRIC_LABELS = {
+  // Valuation
+  pe_ratio: 'P/E Ratio', forward_pe: 'Forward P/E', peg_ratio: 'PEG Ratio',
+  ev_to_ebitda: 'EV / EBITDA', ev_to_revenue: 'EV / Revenue',
+  price_to_fcf: 'Price / FCF', price_to_book: 'Price / Book', price_to_sales_ttm: 'Price / Sales (TTM)',
+  // Profitability
+  gross_margin_pct: 'Gross Margin %', operating_margin_pct: 'Operating Margin %',
+  net_margin_pct: 'Net Margin %', roe_ttm_pct: 'ROE (TTM) %', roa_ttm_pct: 'ROA (TTM) %',
+  roic_pct: 'ROIC %', roiic_3yr_pct: 'ROIIC 3yr %', roc_greenblatt_pct: 'ROC (Greenblatt) %',
+  moat_score: 'Moat Score', profitability_rank: 'Profitability Rank',
+  // Growth
+  revenue_yoy_pct: 'Revenue YoY %', earnings_yoy_pct: 'Earnings YoY %',
+  fcf_yoy_pct: 'FCF YoY %', revenue_3yr_cagr_pct: 'Revenue 3yr CAGR %',
+  forward_revenue_estimate: 'Forward Revenue Est.', forward_eps_estimate: 'Forward EPS Est.',
+  // Financial Health
+  current_ratio: 'Current Ratio', quick_ratio: 'Quick Ratio',
+  quick_ratio_enhanced: 'Quick Ratio (Enhanced)', altman_z_score: 'Altman Z-Score',
+  altman_z_score_adj: 'Altman Z-Score (Adj)', debt_to_equity: 'Debt / Equity',
+  long_term_debt: 'Long-Term Debt', interest_coverage: 'Interest Coverage',
+  net_debt: 'Net Debt', cash_and_equivalents: 'Cash & Equivalents',
+  financial_strength_rank: 'Financial Strength Rank',
+  // Cash Flow
+  fcf: 'Free Cash Flow', operating_cf: 'Operating Cash Flow',
+  capex_to_revenue_pct: 'CapEx / Revenue %', buyback_yield_pct: 'Buyback Yield %',
+  dividend_yield_pct: 'Dividend Yield %', shareholder_yield_pct: 'Shareholder Yield %',
+  shares_outstanding: 'Shares Outstanding',
+  // Competitive / Management
+  moat_rating: 'Moat Rating', moat_sources: 'Moat Sources',
+  insider_ownership_pct: 'Insider Ownership %',
+  guidance_accuracy_notes: 'Guidance Accuracy', capital_allocation_notes: 'Capital Allocation',
+  // Technicals — indicators
+  rsi_14: 'RSI (14)', macd_line: 'MACD Line', macd_signal_line: 'MACD Signal',
+  macd_histogram: 'MACD Histogram', adx_14: 'ADX (14)', adx_trend_strength: 'ADX Trend Strength',
+  atr_14: 'ATR (14)', atr_14_pct: 'ATR % of Price', beta: 'Beta',
+  sharpe_ratio: 'Sharpe Ratio', sortino_ratio: 'Sortino Ratio',
+  obv_current: 'OBV', obv_trend: 'OBV Trend',
+  rs_rating_vs_spy: 'RS Rating vs SPY', rs_rating_label: 'RS Rating Label',
+  vwap_distance_pct: 'VWAP Distance %',
+  bid_ask_spread_pct: 'Bid/Ask Spread %',
+  max_drawdown_1y: 'Max Drawdown 1Y', current_drawdown_52w: 'Current Drawdown 52W',
+  drawdown_recovery_days: 'Drawdown Recovery Days',
+  // Competitive Position supplementary
+  revenue_ttm: 'Revenue TTM',
+  // Price Points
+  daily_close: 'Daily Close', week_52_high: '52-Week High', week_52_low: '52-Week Low',
+  yearly_open: 'Yearly Open', yearly_open_distance_pct: 'Distance from Yearly Open %',
+  proximity_to_52w_high: '52-Week High Proximity %',
+  sma_20: 'SMA 20', sma_200: 'SMA 200', sma_400: 'SMA 400',
+  ema_72: 'EMA 72', vwap_yearly: 'VWAP (Yearly)',
+  fib_236: 'Fib 23.6%', fib_382: 'Fib 38.2%', fib_500: 'Fib 50.0%',
+  fib_618: 'Fib 61.8%', fib_786: 'Fib 78.6%', fib_zone: 'Fib Zone',
+  pivot_pp: 'Pivot Point', pivot_r1: 'Pivot R1', pivot_r2: 'Pivot R2', pivot_r3: 'Pivot R3',
+  pivot_s1: 'Pivot S1', pivot_s2: 'Pivot S2', pivot_s3: 'Pivot S3',
+  ask_price: 'Ask Price', bid_price: 'Bid Price',
+  stddev_mean: 'Std Dev Mean', stddev_plus_1sd: '+1 SD', stddev_plus_2sd: '+2 SD',
+  stddev_minus_1sd: '-1 SD', stddev_minus_2sd: '-2 SD',
+};
+
+// Which raw payload keys belong to which tab
+const TAB_FIELD_MAP = {
+  all_metrics:          ['pe_ratio','forward_pe','peg_ratio','ev_to_ebitda','ev_to_revenue','price_to_fcf','price_to_book','price_to_sales_ttm','gross_margin_pct','operating_margin_pct','net_margin_pct','roe_ttm_pct','roa_ttm_pct','roic_pct','roiic_3yr_pct','roc_greenblatt_pct','moat_score','profitability_rank','revenue_yoy_pct','earnings_yoy_pct','fcf_yoy_pct','revenue_3yr_cagr_pct','forward_revenue_estimate','forward_eps_estimate','current_ratio','quick_ratio','quick_ratio_enhanced','altman_z_score','altman_z_score_adj','debt_to_equity','long_term_debt','interest_coverage','net_debt','cash_and_equivalents','financial_strength_rank','fcf','operating_cf','capex_to_revenue_pct','buyback_yield_pct','dividend_yield_pct','shareholder_yield_pct','shares_outstanding','moat_rating','moat_sources','revenue_ttm','insider_ownership_pct','guidance_accuracy_notes','capital_allocation_notes','rsi_14','macd_line','macd_signal_line','macd_histogram','adx_14','adx_trend_strength','atr_14','atr_14_pct','beta','sharpe_ratio','sortino_ratio','obv_current','obv_trend','rs_rating_vs_spy','rs_rating_label','vwap_distance_pct','bid_ask_spread_pct','max_drawdown_1y','current_drawdown_52w','drawdown_recovery_days','daily_close','week_52_high','week_52_low','yearly_open','yearly_open_distance_pct','proximity_to_52w_high','sma_20','sma_200','sma_400','ema_72','vwap_yearly','fib_236','fib_382','fib_500','fib_618','fib_786','fib_zone','pivot_pp','pivot_r1','pivot_r2','pivot_r3','pivot_s1','pivot_s2','pivot_s3','ask_price','bid_price','stddev_mean','stddev_plus_1sd','stddev_plus_2sd','stddev_minus_1sd','stddev_minus_2sd'],
+  valuation:            ['pe_ratio','forward_pe','peg_ratio','ev_to_ebitda','ev_to_revenue','price_to_fcf','price_to_book','price_to_sales_ttm'],
+  profitability:        ['gross_margin_pct','operating_margin_pct','net_margin_pct','roe_ttm_pct','roa_ttm_pct','roic_pct','roiic_3yr_pct','roc_greenblatt_pct','moat_score','profitability_rank'],
+  growth:               ['revenue_yoy_pct','earnings_yoy_pct','fcf_yoy_pct','revenue_3yr_cagr_pct','forward_revenue_estimate','forward_eps_estimate'],
+  financial_health:     ['current_ratio','quick_ratio','quick_ratio_enhanced','altman_z_score','altman_z_score_adj','debt_to_equity','long_term_debt','interest_coverage','net_debt','cash_and_equivalents','financial_strength_rank'],
+  cash_flow:            ['fcf','operating_cf','capex_to_revenue_pct','buyback_yield_pct','dividend_yield_pct','shareholder_yield_pct','shares_outstanding'],
+  competitive_position: ['moat_score','moat_rating','moat_sources','roc_greenblatt_pct','gross_margin_pct','roic_pct','revenue_ttm'],
+  management_quality:   ['roic_pct','insider_ownership_pct','guidance_accuracy_notes','capital_allocation_notes'],
+  technicals_indicators:['rsi_14','macd_line','macd_signal_line','macd_histogram','adx_14','adx_trend_strength','atr_14','atr_14_pct','beta','sharpe_ratio','sortino_ratio','obv_current','obv_trend','rs_rating_vs_spy','rs_rating_label','vwap_distance_pct','bid_ask_spread_pct','max_drawdown_1y','current_drawdown_52w','drawdown_recovery_days'],
+  price_points:         ['daily_close','week_52_high','week_52_low','yearly_open','yearly_open_distance_pct','proximity_to_52w_high','sma_20','sma_200','sma_400','ema_72','vwap_yearly','fib_236','fib_382','fib_500','fib_618','fib_786','fib_zone','pivot_pp','pivot_r1','pivot_r2','pivot_r3','pivot_s1','pivot_s2','pivot_s3','ask_price','bid_price','stddev_mean','stddev_plus_1sd','stddev_plus_2sd','stddev_minus_1sd','stddev_minus_2sd'],
+};
+
+// Source badge mapping
+const SOURCE_BADGE_MAP = {
+  SEC_EDGAR:    { cls: 'sec',    label: 'Filings' },
+  MARKET_DATA:  { cls: 'market', label: 'Price & Volume' },
+  ALPHA_VANTAGE:{ cls: 'av',     label: 'Fundamentals' },
+  LOCAL_CALC:   { cls: 'calc',   label: 'Calculations' },
+};
+
+// ── STATE ──
+let state = {
+  ticker: '', fullName: '', analysisDate: '', confidenceScore: null,
+  confidenceLevel: '', llmAddendum: 0, llmAddendumRationale: '',
+  filingContext: null, filingContextManagement: null,
+  categoryScores: Object.fromEntries(Object.keys(CATEGORY_WEIGHTS).map(k => [k, 3])),
+  criteriaApplied: {}, riskFlags: [], dataLoaded: false,
+  rawMetrics: {}, dataSources: [],
+  latestReport: null, latestReportDate: null, latestReportVersion: null,
+  modelDisplay: '', tier: '',
+};
+let savedConfigs = [];
+let activeConfigId = null;
+let barChartInst = null, radarChartInst = null;
+let activeMetricTab = 'all_metrics';
+let activeMetricFilter = 'populated';
+let metricSearchQuery = '';
+const STORAGE_KEY = 'investment_scorecard_configs_v2';
+const URL_STORAGE_KEY = 'investment_scorecard_webhook_url_v1';
+
+// ── URL PERSISTENCE (kept local only — never committed to the file itself) ──
+function loadSavedUrl() {
+  try {
+    const saved = localStorage.getItem(URL_STORAGE_KEY);
+    if (saved) document.getElementById('webhook-url').value = saved;
+  } catch(e) { /* ignore corrupt/inaccessible storage */ }
+}
+function persistUrl() {
+  try {
+    const val = document.getElementById('webhook-url').value.trim();
+    if (val) localStorage.setItem(URL_STORAGE_KEY, val);
+    else localStorage.removeItem(URL_STORAGE_KEY);
+  } catch(e) { /* ignore quota/storage errors */ }
+}
+
+// ── PERSISTENCE ──
+function loadConfigs() {
+  try { const r = localStorage.getItem(STORAGE_KEY); if (r) savedConfigs = JSON.parse(r); } catch(e) { savedConfigs = []; }
+}
+function persistConfigs() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(savedConfigs)); } catch(e) {}
+}
+
+// ── CALCULATIONS ──
+function calcRubricTotal() {
+  return Object.entries(CATEGORY_WEIGHTS).reduce((sum, [cat, w]) => sum + (state.categoryScores[cat] || 0) * w, 0);
+}
+function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+function calcFinalScore() { return clamp(calcRubricTotal() + clamp(state.llmAddendum, -0.5, 0.5), 0, 5); }
+function getConviction(score) { return CONVICTION_THRESHOLDS.find(t => score >= t.min && score <= t.max) || CONVICTION_THRESHOLDS[4]; }
+function getConfidenceLevel(score) { return CONFIDENCE_LEVELS.find(l => score >= l.min) || CONFIDENCE_LEVELS[3]; }
+function scoreColor(s) { return ['#555C73','#E05A5A','#E09A3A','#C8A84B','#4BBFBF','#5ABF8A'][Math.max(0,Math.min(5,Math.round(s)))]; }
+function formatValue(v) {
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'boolean') return v ? 'True' : 'False';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number') {
+    if (Math.abs(v) >= 1e9) return (v / 1e9).toFixed(2) + 'B';
+    if (Math.abs(v) >= 1e6) return (v / 1e6).toFixed(2) + 'M';
+    return Number.isInteger(v) ? v.toLocaleString() : parseFloat(v.toFixed(4)).toString();
+  }
+  return String(v);
+}
+
+// ── RENDER ──
+function render() {
+  const rubric = calcRubricTotal();
+  const llm = clamp(state.llmAddendum, -0.5, 0.5);
+  const final = calcFinalScore();
+  const conviction = getConviction(final);
+
+  // Sidebar
+  const sScore = document.getElementById('sidebar-score');
+  sScore.textContent = final.toFixed(2);
+  sScore.className = 'conviction-score conviction-' + conviction.key;
+  document.getElementById('sidebar-score-max').textContent = '/ 5.0';
+  document.getElementById('sidebar-level').textContent = conviction.label;
+  document.getElementById('sidebar-level').className = 'conviction-level conviction-' + conviction.key;
+  document.getElementById('sidebar-action').textContent = conviction.actions.join(' · ');
+  document.getElementById('sb-final').textContent = final.toFixed(2);
+
+  // Mobile sticky scorebar mirror
+  const msbScore = document.getElementById('msb-score');
+  if (msbScore) {
+    document.getElementById('msb-ticker').textContent = state.ticker || '—';
+    msbScore.textContent = final.toFixed(2) + ' / 5.0';
+    msbScore.className = 'msb-score conviction-' + conviction.key;
+    const msbLevel = document.getElementById('msb-level');
+    msbLevel.textContent = conviction.label;
+    msbLevel.className = 'msb-level conviction-' + conviction.key;
+  }
+
+  // Confidence sidebar
+  if (state.confidenceScore !== null) {
+    const pct = Math.round(state.confidenceScore * 100);
+    document.getElementById('conf-val').textContent = pct + '%';
+    document.getElementById('conf-bar').style.width = pct + '%';
+    document.getElementById('conf-level').textContent = getConfidenceLevel(state.confidenceScore).label;
+  }
+
+  if (!state.dataLoaded) return;
+
+  // ① Identity bar
+  document.getElementById('asset-ticker').textContent = state.ticker || '—';
+  document.getElementById('asset-name').textContent = state.fullName || '';
+  document.getElementById('asset-date').textContent = state.analysisDate ? 'Analysis date: ' + state.analysisDate : '';
+
+  // Source badges
+  const badgesEl = document.getElementById('source-badges');
+  badgesEl.innerHTML = '';
+  (state.dataSources || []).forEach(src => {
+    const map = SOURCE_BADGE_MAP[src] || { cls: 'other', label: src };
+    const span = document.createElement('span');
+    span.className = 'source-badge ' + map.cls;
+    span.textContent = map.label;
+    badgesEl.appendChild(span);
+  });
+
+  // Identity confidence
+  if (state.confidenceScore !== null) {
+    document.getElementById('id-conf-pct').textContent = Math.round(state.confidenceScore * 100) + '%';
+    document.getElementById('id-conf-label').textContent = getConfidenceLevel(state.confidenceScore).label;
+  }
+
+  // ② Verdict
+  const vScore = document.getElementById('v-score');
+  vScore.textContent = final.toFixed(2);
+  vScore.className = 'verdict-score-num conviction-' + conviction.key;
+  document.getElementById('v-conviction').textContent = conviction.label;
+  document.getElementById('v-conviction').className = 'verdict-conviction conviction-' + conviction.key;
+  document.getElementById('v-action').textContent = conviction.actions.join(' · ');
+
+  // Render latest generated report, falling back to expanded AI scoring assessment
+  const rationaleEl = document.getElementById('v-rationale');
+  const reportDateEl = document.getElementById('v-report-date');
+  const sectionLabel = document.querySelector('.verdict-rationale-label');
+  if (state.latestReport) {
+    if (sectionLabel) sectionLabel.textContent = 'Latest Research Report';
+    rationaleEl.textContent = state.latestReport;
+    rationaleEl.style.fontStyle = 'normal';
+    rationaleEl.style.fontSize = '0.82rem';
+    rationaleEl.style.whiteSpace = 'pre-wrap';
+    rationaleEl.style.maxHeight = '320px';
+    rationaleEl.style.overflowY = 'auto';
+    if (reportDateEl && state.latestReportDate) {
+      reportDateEl.textContent = 'Report v' + (state.latestReportVersion || '?') + ' · ' + state.latestReportDate;
+    }
+  } else {
+    if (sectionLabel) sectionLabel.textContent = 'AI Scoring Assessment';
+    if (reportDateEl) reportDateEl.textContent = 'No research report generated yet';
+    rationaleEl.style.fontStyle = 'normal';
+    rationaleEl.style.fontSize = '';
+    rationaleEl.style.whiteSpace = '';
+    rationaleEl.style.maxHeight = '420px';
+    rationaleEl.style.overflowY = 'auto';
+    rationaleEl.innerHTML = '';
+
+    const hasCriteria = Object.keys(state.criteriaApplied).some(k => (state.criteriaApplied[k] || []).length > 0);
+
+    if (hasCriteria) {
+      const wrap = document.createElement('div');
+      wrap.className = 'ai-assessment';
+
+      Object.entries(CATEGORY_WEIGHTS).forEach(([cat, weight]) => {
+        const score = state.categoryScores[cat] || 0;
+        const scoreInt = Math.round(score);
+        const criteria = state.criteriaApplied[cat] || [];
+        if (criteria.length === 0) return;
+
+        const row = document.createElement('div');
+        row.className = 'ai-cat-row';
+        row.style.borderLeftColor = scoreColor(score);
+
+        const header = document.createElement('div');
+        header.className = 'ai-cat-header';
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'ai-cat-name';
+        nameEl.textContent = CATEGORY_LABELS[cat] || cat;
+
+        const scoreEl = document.createElement('div');
+        scoreEl.className = 'ai-cat-score score-' + scoreInt;
+        scoreEl.textContent = score.toFixed(1) + ' / 5';
+
+        header.appendChild(nameEl);
+        header.appendChild(scoreEl);
+        row.appendChild(header);
+
+        const top = criteria.slice(0, 3);
+        if (top.length > 0) {
+          const critEl = document.createElement('div');
+          critEl.className = 'ai-cat-criteria';
+          critEl.textContent = top.map(c => c.label || c.metric || '').filter(Boolean).join(' · ');
+          row.appendChild(critEl);
+        }
+
+        wrap.appendChild(row);
+      });
+
+      if (state.llmAddendumRationale) {
+        const addEl = document.createElement('div');
+        addEl.className = 'ai-addendum';
+        addEl.textContent = state.llmAddendumRationale;
+        wrap.appendChild(addEl);
+      }
+
+      // Filing context — render 10-K excerpts used during scoring
+      const combinedContext = [
+        { label: 'Business & Strategy', text: state.filingContext },
+        { label: 'Management & Capital Allocation', text: state.filingContextManagement }
+      ].filter(c => c.text);
+
+      if (combinedContext.length > 0) {
+        // Section title → human-readable label map
+        const SECTION_LABEL_MAP = [
+          { pattern: /Item\s*1A.*Risk/i,             label: 'Risk Factors' },
+          { pattern: /Item\s*1[^A0-9].*Business/i,  label: 'Business Overview' },
+          { pattern: /Item\s*7[^A].*MD.*A/i,         label: 'MD&A — Management Discussion & Analysis' },
+          { pattern: /Item\s*7A.*Quantitative/i,     label: 'Quantitative & Qualitative Disclosures' },
+          { pattern: /Item\s*5.*Market.*Equity/i,    label: 'Market for Common Equity' },
+          { pattern: /Item\s*9A.*Controls/i,         label: 'Controls & Procedures' },
+          { pattern: /Item\s*15.*Exhibits/i,         label: 'Exhibits & Financial Statements' },
+        ];
+
+        function readableTitle(rawTitle) {
+          for (const { pattern, label } of SECTION_LABEL_MAP) {
+            if (pattern.test(rawTitle)) return label;
+          }
+          // Fallback: strip ticker prefix, fiscal year, chunk/part suffixes
+          return rawTitle
+            .replace(/^[A-Z]+\s+10-K\s+FY\d+\s+[—–-]\s*/i, '')
+            .replace(/\s+part\d+\s+chunk\d+/gi, '')
+            .replace(/\s+chunk\d+/gi, '')
+            .replace(/\s+part\d+/gi, '')
+            .replace(/_/g, ' ')
+            .trim() || rawTitle;
+        }
+
+        const fcSection = document.createElement('div');
+        fcSection.className = 'filing-context-section';
+
+        // Header with collapse toggle
+        const fcHeader = document.createElement('div');
+        fcHeader.className = 'filing-context-header';
+
+        const fcLabel = document.createElement('div');
+        fcLabel.className = 'filing-context-label';
+        fcLabel.textContent = 'Annual Filing Context Used in Scoring';
+
+        const fcToggle = document.createElement('button');
+        fcToggle.className = 'filing-context-toggle';
+        fcToggle.textContent = 'Show';
+
+        fcHeader.appendChild(fcLabel);
+        fcHeader.appendChild(fcToggle);
+        fcSection.appendChild(fcHeader);
+
+        const fcBody = document.createElement('div');
+        fcBody.className = 'filing-context-body';
+
+        combinedContext.forEach(ctx => {
+          const streamEl = document.createElement('div');
+          streamEl.className = 'filing-stream';
+
+          const streamLabel = document.createElement('div');
+          streamLabel.className = 'filing-stream-label';
+          streamLabel.textContent = ctx.label;
+          streamEl.appendChild(streamLabel);
+
+          const chunks = ctx.text.split(/\n\n(?=\[\d+\])/).filter(Boolean);
+          chunks.forEach(chunk => {
+            const titleMatch = chunk.match(/^\[(\d+)\]\s*(.+?)\n/);
+            const rawTitle = titleMatch ? titleMatch[2].trim() : ctx.label;
+            const title = readableTitle(rawTitle);
+            const body = titleMatch ? chunk.slice(titleMatch[0].length).trim() : chunk.trim();
+
+            const chunkEl = document.createElement('div');
+            chunkEl.className = 'filing-chunk';
+
+            const titleEl = document.createElement('div');
+            titleEl.className = 'filing-chunk-title';
+            titleEl.textContent = title;
+
+            const bodyEl = document.createElement('div');
+            bodyEl.className = 'filing-chunk-body';
+            bodyEl.textContent = body;
+
+            chunkEl.appendChild(titleEl);
+            chunkEl.appendChild(bodyEl);
+            streamEl.appendChild(chunkEl);
+          });
+
+          fcBody.appendChild(streamEl);
+        });
+
+        fcSection.appendChild(fcBody);
+
+        // Toggle handler
+        fcToggle.addEventListener('click', () => {
+          const isOpen = fcBody.classList.contains('open');
+          fcBody.classList.toggle('open', !isOpen);
+          fcToggle.textContent = isOpen ? 'Show' : 'Hide';
+        });
+        fcHeader.addEventListener('click', (e) => {
+          if (e.target !== fcToggle) fcToggle.click();
+        });
+
+        wrap.appendChild(fcSection);
+      }
+
+      rationaleEl.appendChild(wrap);
+    } else if (state.llmAddendumRationale) {
+      rationaleEl.style.fontStyle = 'italic';
+      rationaleEl.textContent = state.llmAddendumRationale;
+    } else {
+      rationaleEl.style.fontStyle = 'italic';
+      rationaleEl.textContent = 'No scoring assessment available.';
+    }
+  }
+
+  // ③ Category cards
+  const grid = document.getElementById('categories-grid');
+  grid.innerHTML = '';
+  // Full metric list per scoring category — maps rubric category to TAB_FIELD_MAP keys
+  const CATEGORY_FIELD_MAP = {
+    valuation:            TAB_FIELD_MAP.valuation,
+    profitability:        TAB_FIELD_MAP.profitability,
+    growth:               TAB_FIELD_MAP.growth,
+    financial_health:     TAB_FIELD_MAP.financial_health,
+    competitive_position: TAB_FIELD_MAP.competitive_position,
+    management_quality:   TAB_FIELD_MAP.management_quality,
+    technicals:           [...TAB_FIELD_MAP.technicals_indicators, ...TAB_FIELD_MAP.price_points],
+  };
+
+  Object.entries(CATEGORY_WEIGHTS).forEach(([cat, weight]) => {
+    const score = state.categoryScores[cat] || 0;
+    const weighted = (score * weight).toFixed(3);
+    const scoreInt = Math.round(score);
+    const barPct = (score / 5) * 100;
+
+    const card = document.createElement('div');
+    card.className = 'category-card';
+    card.innerHTML =
+      '<div class="cat-header">' +
+        '<div class="cat-name">' + CATEGORY_LABELS[cat] + '</div>' +
+        '<div class="cat-weight">' + (weight * 100).toFixed(0) + '% weight</div>' +
+      '</div>' +
+      '<div class="cat-score-row">' +
+        '<div class="cat-score-display score-' + scoreInt + '">' + score.toFixed(1) + '</div>' +
+        '<div class="cat-score-denom">/ 5.0</div>' +
+      '</div>' +
+      '<div class="cat-bar-wrap"><div class="cat-bar-track"><div class="cat-bar-fill bar-' + scoreInt + '" style="width:' + barPct + '%"></div></div></div>' +
+      '<div class="cat-bottom">' +
+        '<div class="cat-label score-' + scoreInt + '">' + (SCORE_LABELS[scoreInt] || '—') + '</div>' +
+        '<div class="cat-weighted">Weighted: <span>' + weighted + '</span></div>' +
+      '</div>' +
+      '<div class="criteria-list" id="crit-' + cat + '"></div>';
+    grid.appendChild(card);
+
+    // Render full metric list — populated metrics only, consistent across all tickers
+    // Hybrid: overlay LLM score badge where criteria_applied has a score for that metric
+    const cl = card.querySelector('#crit-' + cat);
+    const fields = CATEGORY_FIELD_MAP[cat] || [];
+    const metrics = state.rawMetrics;
+    const criteria = state.criteriaApplied[cat] || [];
+    // Build a lookup: metric key -> LLM score
+    const llmScoreMap = {};
+    criteria.forEach(c => { if (c.metric) llmScoreMap[c.metric] = c.score; });
+    let renderedCount = 0;
+    fields.forEach(key => {
+      const val = metrics[key];
+      if (val === null || val === undefined) return;
+      renderedCount++;
+      const row = document.createElement('div');
+      row.className = 'criterion-row';
+      const ms = document.createElement('span'); ms.className = 'crit-metric'; ms.textContent = METRIC_LABELS[key] || key;
+      const vs = document.createElement('span'); vs.className = 'crit-value'; vs.textContent = formatValue(val);
+      row.appendChild(ms); row.appendChild(vs);
+      // No per-metric badge — badge display reserved for overall scorecard area
+      cl.appendChild(row);
+    });
+    if (renderedCount === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'padding:6px 0; color:var(--ink3); font-style:italic; font-size:0.75rem;';
+      empty.textContent = 'No metric data available';
+      cl.appendChild(empty);
+    }
+  });
+
+  // Charts
+  renderCharts();
+
+  // ④ Score breakdown — final score and conviction only
+  document.getElementById('bd-final').textContent = final.toFixed(2);
+  const pill = document.getElementById('bd-pill');
+  pill.textContent = conviction.label;
+  pill.className = 'breakdown-pill pill-' + conviction.key;
+
+  // ⑤ Raw metrics tabs + table
+  renderMetricTabs();
+  renderMetricsTable();
+
+  // ⑥ Risk flags
+  renderRiskFlags();
+}
+
+function renderCharts() {
+  const cats = Object.keys(CATEGORY_WEIGHTS);
+  const labels = cats.map(c => CATEGORY_LABELS[c]);
+  const rawScores = cats.map(c => state.categoryScores[c] || 0);
+  const weighted = cats.map(c => parseFloat(((state.categoryScores[c] || 0) * CATEGORY_WEIGHTS[c]).toFixed(3)));
+  const colors = rawScores.map(s => scoreColor(s));
+
+  if (barChartInst) barChartInst.destroy();
+  barChartInst = new Chart(document.getElementById('bar-chart').getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Weighted contribution', data: weighted, backgroundColor: colors, borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1A1E2A',
+          titleColor: '#E8EAF0',
+          bodyColor: '#C8A84B',
+          borderColor: 'rgba(255,255,255,0.12)',
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            label: ctx => ` Weighted contribution: ${ctx.parsed.y}`
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { font: { family: "'IBM Plex Mono'", size: 10 }, color: '#8B91A8' }, grid: { display: false }, border: { color: 'rgba(255,255,255,0.07)' } },
+        y: { min: 0, max: 1, ticks: { font: { family: "'IBM Plex Mono'", size: 10 }, color: '#8B91A8' }, grid: { color: 'rgba(255,255,255,0.06)' }, border: { dash: [3,3], color: 'transparent' } }
+      }
+    }
+  });
+
+  if (radarChartInst) radarChartInst.destroy();
+  radarChartInst = new Chart(document.getElementById('radar-chart').getContext('2d'), {
+    type: 'radar',
+    data: { labels, datasets: [{ label: 'Raw score', data: rawScores, backgroundColor: 'rgba(200,168,75,0.12)', borderColor: 'rgba(200,168,75,0.7)', pointBackgroundColor: 'rgba(200,168,75,0.9)', pointRadius: 3, borderWidth: 1.5 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { r: { min: 0, max: 5, ticks: { display: false }, grid: { color: 'rgba(255,255,255,0.06)' }, angleLines: { color: 'rgba(255,255,255,0.06)' }, pointLabels: { font: { family: "'IBM Plex Mono'", size: 10 }, color: '#8B91A8' } } }
+    }
+  });
+}
+
+function renderMetricTabs() {
+  const tabsEl = document.getElementById('metrics-tabs');
+  tabsEl.innerHTML = '';
+  METRIC_TABS.forEach(tab => {
+    const btn = document.createElement('button');
+    btn.className = 'metrics-tab' + (tab.key === activeMetricTab ? ' active' : '');
+    btn.textContent = tab.label;
+    btn.addEventListener('click', () => { activeMetricTab = tab.key; renderMetricTabs(); renderMetricsTable(); });
+    tabsEl.appendChild(btn);
+  });
+}
+
+function renderMetricsTable() {
+  const fields = TAB_FIELD_MAP[activeMetricTab] || [];
+  const metrics = state.rawMetrics;
+  const tbody = document.getElementById('metrics-tbody');
+  const emptyEl = document.getElementById('metrics-empty');
+  tbody.innerHTML = '';
+
+  const rows = fields.map(key => {
+    const val = metrics[key] !== undefined ? metrics[key] : undefined;
+    return { key, label: METRIC_LABELS[key] || key, value: val, isNull: val === null || val === undefined };
+  }).filter(r => {
+    // Apply null/populated filter
+    if (activeMetricFilter === 'null' && !r.isNull) return false;
+    if (activeMetricFilter === 'populated' && r.isNull) return false;
+    // Apply search
+    if (metricSearchQuery) {
+      const q = metricSearchQuery.toLowerCase();
+      if (!r.label.toLowerCase().includes(q) && !r.key.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  if (rows.length === 0) {
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    const tdName = document.createElement('td');
+    tdName.className = 'metric-name';
+    tdName.textContent = r.label;
+
+    const tdVal = document.createElement('td');
+    if (r.isNull) {
+      tdVal.className = 'metric-null';
+      tdVal.textContent = '—';
+    } else {
+      tdVal.className = 'metric-value';
+      tdVal.textContent = formatValue(r.value);
+    }
+
+    const tdStatus = document.createElement('td');
+    if (r.isNull) {
+      const badge = document.createElement('span');
+      tdStatus.appendChild(badge);
+    } else {
+      tdStatus.style.color = 'var(--green)';
+      tdStatus.style.fontFamily = 'var(--font-mono)';
+      tdStatus.style.fontSize = '0.62rem';
+      tdStatus.textContent = '\u2714';
+    }
+
+    tr.appendChild(tdName); tr.appendChild(tdVal); tr.appendChild(tdStatus);
+    tbody.appendChild(tr);
+  });
+}
+
+function renderRiskFlags() {
+  const container = document.getElementById('risk-flags-main');
+  const flags = state.riskFlags.filter(f => f && f.flag);
+  container.innerHTML = '';
+  if (!flags.length) {
+    const nf = document.createElement('div'); nf.className = 'no-flags'; nf.textContent = 'No risk flags identified for this scorecard run.';
+    container.appendChild(nf); return;
+  }
+  const VALID_SEV = new Set(['high','medium','low']);
+  flags.forEach(f => {
+    const div = document.createElement('div');
+    const sev = VALID_SEV.has(f.severity) ? f.severity : 'low';
+    div.className = 'risk-flag ' + sev;
+    const sevD = document.createElement('div'); sevD.className = 'rf-sev'; sevD.textContent = sev;
+    const txtD = document.createElement('div'); txtD.className = 'rf-text'; txtD.textContent = f.flag + (f.detail ? ' \u2014 ' + f.detail : '');
+    div.appendChild(sevD); div.appendChild(txtD);
+    container.appendChild(div);
+  });
+}
+
+// ── APPLY SCORECARD ──
+function applyScorecard(json) {
+  const data = Array.isArray(json) ? json[0] : json;
+  const envelope = data.asset_type ? data : (data.json || data.data || data);
+
+  state.ticker = envelope.identifier || envelope.ticker || '';
+  state.fullName = envelope.full_name || '';
+  state.analysisDate = envelope.analysis_date || '';
+  state.confidenceScore = typeof envelope.confidence_score === 'number' ? envelope.confidence_score : null;
+  state.confidenceLevel = envelope.confidence_level || '';
+  state.dataSources = Array.isArray(envelope.data_sources) ? envelope.data_sources : [];
+  state.modelDisplay = envelope.model_display || '';
+  state.tier = envelope.tier || '';
+
+  const payload = envelope.payload || envelope;
+  const scorecard = payload.scorecard || {};
+  const catScores = scorecard.category_scores || [];
+
+  catScores.forEach(cs => {
+    if (cs.category && CATEGORY_WEIGHTS[cs.category] !== undefined) {
+      state.categoryScores[cs.category] = cs.raw_score !== null && cs.raw_score !== undefined ? parseFloat(cs.raw_score) : 3;
+      state.criteriaApplied[cs.category] = cs.criteria_applied || [];
+      // Use weight from scorecard data if present — overrides hardcoded constant
+      if (cs.weight !== null && cs.weight !== undefined) {
+        CATEGORY_WEIGHTS[cs.category] = parseFloat(cs.weight);
+      }
+    }
+  });
+
+  state.llmAddendum = parseFloat(scorecard.llm_additional_score) || 0;
+  state.llmAddendumRationale = scorecard.llm_additional_score_rationale || '';
+  state.filingContext = scorecard.filing_context || null;
+  state.filingContextManagement = scorecard.filing_context_management || null;
+  document.getElementById('llm-addendum') && (document.getElementById('llm-addendum').value = state.llmAddendum);
+
+  state.riskFlags = (payload.risk_flags || []).filter(f => f && f.flag);
+
+  // Latest report from reports table (injected by webhook)
+  state.latestReport = envelope.latest_report || null;
+  state.latestReportDate = envelope.latest_report_date || null;
+  state.latestReportVersion = envelope.latest_report_version || null;
+
+  // Collect raw metrics — flatten relevant payload sections
+  const raw = {};
+  const valData = payload.valuation || {};
+  const profData = payload.profitability || {};
+  const growData = payload.growth || {};
+  const fhData = payload.financial_health || {};
+  const cfData = payload.cash_flow || {};
+  const compData = payload.competitive_position || {};
+  const mgmtData = payload.management_quality || {};
+  const techData = payload.technicals || {};
+
+  TAB_FIELD_MAP.valuation.forEach(k => { raw[k] = valData[k]; });
+  TAB_FIELD_MAP.profitability.forEach(k => { raw[k] = profData[k] !== undefined ? profData[k] : compData[k]; });
+  TAB_FIELD_MAP.growth.forEach(k => { raw[k] = growData[k]; });
+  TAB_FIELD_MAP.financial_health.forEach(k => { raw[k] = fhData[k]; });
+  TAB_FIELD_MAP.cash_flow.forEach(k => { raw[k] = cfData[k]; });
+  TAB_FIELD_MAP.competitive_position.forEach(k => {
+    raw[k] = compData[k] !== undefined ? compData[k] : (profData[k] !== undefined ? profData[k] : undefined);
+  });
+  TAB_FIELD_MAP.management_quality.forEach(k => {
+    raw[k] = mgmtData[k] !== undefined ? mgmtData[k] : (profData[k] !== undefined ? profData[k] : undefined);
+  });
+  // Technicals — split into indicators and price points from same source
+  TAB_FIELD_MAP.technicals_indicators.forEach(k => { raw[k] = techData[k]; });
+  TAB_FIELD_MAP.price_points.forEach(k => { raw[k] = techData[k]; });
+
+  state.rawMetrics = raw;
+  state.dataLoaded = true;
+
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('scorecard-content').style.display = 'block';
+
+  render();
+
+  // Lock sliders
+  document.querySelectorAll('.score-slider').forEach(s => {
+    s.disabled = true; s.style.opacity = '0.4'; s.style.cursor = 'not-allowed'; s.style.pointerEvents = 'none';
+  });
+}
+
+// ── DERIVE WATCHLIST URL FROM WEBHOOK URL (same domain, sibling path) ──
+function deriveWatchlistUrl(webhookUrl) {
+  if (!webhookUrl) return null;
+  try {
+    const u = new URL(webhookUrl);
+    const parts = u.pathname.split('/').filter(Boolean);
+    if (parts.length === 0) return null;
+    parts[parts.length - 1] = 'watchlist';
+    u.pathname = '/' + parts.join('/');
+    u.search = '';
+    u.hash = '';
+    return u.toString();
+  } catch(e) {
+    return null;
+  }
+}
+
+// ── WATCHLIST FETCH ──
+async function loadWatchlist() {
+  const webhookUrl = document.getElementById('webhook-url').value.trim();
+  const select = document.getElementById('ticker-select');
+  const watchlistUrl = deriveWatchlistUrl(webhookUrl);
+  if (!watchlistUrl) {
+    select.innerHTML = '<option value="">— Enter data service URL below —</option>';
+    return;
+  }
+  select.innerHTML = '<option value="">— Loading… —</option>';
+  try {
+    const resp = await fetch(watchlistUrl, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const json = await resp.json();
+    const tickers = Array.isArray(json) ? json : (json.tickers || []);
+    if (tickers.length === 0) throw new Error('Empty watchlist response');
+    select.innerHTML = '<option value="">— Select a ticker —</option>';
+    tickers.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.ticker;
+      opt.textContent = t.ticker + ' (' + t.asset_type + ')';
+      select.appendChild(opt);
+    });
+  } catch(e) {
+    select.innerHTML = '<option value="">— Failed to load watchlist —</option>';
+    console.warn('Watchlist fetch failed:', e.message);
+  }
+}
+
+document.getElementById('ticker-select').addEventListener('change', () => {
+  const val = document.getElementById('ticker-select').value;
+  if (val) document.getElementById('ticker-input').value = val;
+});
+
+document.getElementById('webhook-url').addEventListener('change', () => { persistUrl(); loadWatchlist(); });
+document.getElementById('btn-reload-watchlist').addEventListener('click', () => loadWatchlist());
+
+// Restore a locally-saved URL (if any), then attempt to load the watchlist
+window.addEventListener('DOMContentLoaded', () => { loadSavedUrl(); loadWatchlist(); });
+
+// ── Mobile UX: sticky scorebar visibility + collapsible sidebar ──
+(function initMobileUX() {
+  const mq = window.matchMedia('(max-width: 960px)');
+  const bar = document.getElementById('mobile-scorebar');
+
+  window.addEventListener('scroll', () => {
+    if (!bar) return;
+    const show = mq.matches && state.dataLoaded && window.scrollY > 240;
+    bar.classList.toggle('visible', show);
+  }, { passive: true });
+
+  const sections = document.querySelectorAll('.sidebar-section');
+  function applyCollapse() {
+    sections.forEach((sec, i) => {
+      if (mq.matches && i > 0) sec.classList.add('collapsed');
+      if (!mq.matches) sec.classList.remove('collapsed');
+    });
+  }
+  applyCollapse();
+  if (mq.addEventListener) mq.addEventListener('change', applyCollapse);
+
+  sections.forEach(sec => {
+    const label = sec.querySelector('.section-label');
+    if (label) label.addEventListener('click', () => {
+      if (mq.matches) sec.classList.toggle('collapsed');
+    });
+  });
+})();
+
+// ── FETCH ──
+document.getElementById('btn-fetch').addEventListener('click', async () => {
+  const url = document.getElementById('webhook-url').value.trim();
+  persistUrl();
+  const ticker = (document.getElementById('ticker-input').value.trim() || document.getElementById('ticker-select').value.trim()).toUpperCase();
+  const tier = document.querySelector('input[name="report-tier"]:checked').value;
+  const status = document.getElementById('fetch-status');
+  if (!url) { status.textContent = '\u26a0 Enter a service URL first'; status.className = 'fetch-status err'; return; }
+  if (!ticker) { status.textContent = '\u26a0 Enter a ticker symbol'; status.className = 'fetch-status err'; return; }
+  status.textContent = 'Fetching ' + ticker + '\u2026'; status.className = 'fetch-status info';
+  document.getElementById('btn-fetch').disabled = true;
+  try {
+    const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker, tier }) });
+    const json = await resp.json();
+    if (json && json.error === 'not_generated') {
+      status.textContent = '\u2139 ' + json.message; status.className = 'fetch-status err';
+      return;
+    }
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    applyScorecard(json);
+    const modelLabel = json.model_display ? ' (' + json.model_display + ')' : '';
+    status.textContent = '\u2713 Loaded ' + ticker + ' scorecard' + modelLabel; status.className = 'fetch-status ok';
+  } catch(e) {
+    status.textContent = '\u2717 Fetch failed \u2014 ' + e.message; status.className = 'fetch-status err';
+  } finally {
+    document.getElementById('btn-fetch').disabled = false;
+  }
+});
+document.getElementById('ticker-input').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-fetch').click(); });
+
+// ── METRICS SEARCH ──
+document.getElementById('metrics-search').addEventListener('input', e => {
+  metricSearchQuery = e.target.value.trim();
+  renderMetricsTable();
+});
+
+// ── SAVED CONFIGS ──
+function renderConfigs() {
+  const list = document.getElementById('config-list');
+  list.innerHTML = '';
+  if (!savedConfigs.length) {
+    const empty = document.createElement('div'); empty.className = 'configs-empty'; empty.textContent = 'No saved configurations yet.';
+    list.appendChild(empty); return;
+  }
+  savedConfigs.forEach(cfg => {
+    const item = document.createElement('div'); item.className = 'config-item';
+    const nameSpan = document.createElement('span'); nameSpan.className = 'cfg-name'; nameSpan.title = cfg.name; nameSpan.textContent = cfg.name;
+    const actions = document.createElement('div'); actions.className = 'cfg-actions';
+    const loadBtn = document.createElement('button'); loadBtn.className = 'cfg-btn'; loadBtn.dataset.id = cfg.id; loadBtn.dataset.action = 'load'; loadBtn.textContent = 'Load';
+    const delBtn = document.createElement('button'); delBtn.className = 'cfg-btn del'; delBtn.dataset.id = cfg.id; delBtn.dataset.action = 'del'; delBtn.textContent = 'Del';
+    actions.appendChild(loadBtn); actions.appendChild(delBtn);
+    item.appendChild(nameSpan); item.appendChild(actions);
+    list.appendChild(item);
+  });
+  list.querySelectorAll('.cfg-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (btn.dataset.action === 'load') loadConfig(btn.dataset.id);
+      if (btn.dataset.action === 'del') deleteConfig(btn.dataset.id);
+    });
+  });
+}
+
+function stateSnapshot() { return JSON.parse(JSON.stringify(state)); }
+
+function loadConfig(id) {
+  const cfg = savedConfigs.find(c => c.id === id);
+  if (!cfg) return;
+  activeConfigId = id;
+  Object.assign(state, cfg.state);
+  document.getElementById('ticker-input').value = state.ticker || '';
+  if (state.dataLoaded) {
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('scorecard-content').style.display = 'block';
+  }
+  renderConfigs(); render();
+  if (state.dataLoaded) {
+    document.querySelectorAll('.score-slider').forEach(s => {
+      s.disabled = true; s.style.opacity = '0.4'; s.style.cursor = 'not-allowed'; s.style.pointerEvents = 'none';
+    });
+  }
+}
+
+function deleteConfig(id) {
+  savedConfigs = savedConfigs.filter(c => c.id !== id);
+  if (activeConfigId === id) activeConfigId = null;
+  persistConfigs(); renderConfigs();
+}
+
+// Save button removed — use Export/Import for config persistence
+
+document.getElementById('btn-export').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(savedConfigs, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'scorecard_configs.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('import-input').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (Array.isArray(imported)) {
+        const existing = new Set(savedConfigs.map(c => c.id));
+        imported.forEach(cfg => { if (!existing.has(cfg.id)) savedConfigs.push(cfg); });
+        persistConfigs(); renderConfigs();
+      }
+    } catch { alert('Invalid JSON file.'); }
+  };
+  reader.readAsText(file); e.target.value = '';
+});
+
+// ── INIT ──
+loadConfigs(); renderConfigs(); render();
+</script>
+</body>
+</html>
