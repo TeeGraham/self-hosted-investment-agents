@@ -1,6 +1,8 @@
 # Self-Hosted Multi-Agent Investment Research Platform — Capability Summary
 
+Current View on the live data score cards:
 https://gyazo.com/e64daa9786d603b8c314781136e4e213
+
 <img width="1492" height="578" alt="Scorecard Image" src="https://github.com/user-attachments/assets/f2f81509-a771-4fea-9df8-f8f490e1bbbd" />
 
 
