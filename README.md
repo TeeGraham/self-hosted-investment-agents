@@ -1,5 +1,9 @@
 # Self-Hosted Multi-Agent Investment Research Platform — Capability Summary
 
+https://gyazo.com/e64daa9786d603b8c314781136e4e213
+<img width="1492" height="578" alt="Scorecard Image" src="https://github.com/user-attachments/assets/f2f81509-a771-4fea-9df8-f8f490e1bbbd" />
+
+
 > **Purpose of this document.** A sanitized, portfolio-facing overview of a system I designed, built, and operate. It describes *what the system does and how it is engineered* without exposing infrastructure addresses, credentials, proprietary scoring methodology, or client data. Intended for sharing with prospective employers or collaborators.
 
 ---
