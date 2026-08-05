@@ -25,13 +25,18 @@ A self-hosted crew of cooperating AI agents that ingests investment source mater
 A few numbers that tend to prompt the follow-up questions:
 
 - **A personal-scale analog of a Bloomberg/Aladdin-style research desk** — consolidated data, scoring, a research knowledge base, and generated reports — for a small fraction of institutional licensing cost.
-- **~40 modular workflows, ~25 live in production** — every capability is an independently testable agent, not a monolith.
-- **Runs largely unattended** — nightly data pipelines, independently scheduled "vertical" products, and self-healing recovery (auto-restart, memory watchdog, post-failure health check) keep it operating without a human in the loop.
+- **~120 modular workflows, ~60 live in production** — every capability is an independently testable agent, not a monolith. Grown roughly 3x since the platform's first public snapshot, without a rebuild.
+- **Runs largely unattended at real production scale** — nightly data pipelines, independently scheduled "vertical" products, and self-healing recovery (auto-restart, memory watchdog, post-failure health check) process a full multi-asset watchlist every night with no human in the loop.
 - **Zero-GPU LLM inference** — local models run entirely on CPU, with heavier reasoning selectively offloaded to a hosted model as an explicit, documented cost/quality decision.
-- **~1 GB of RAM headroom** at realistic peak load on the original box — which forced a five-layer memory-protection design plus automatic out-of-memory recovery.
+- **Survived a real out-of-memory production crash and proved the fix live** — root-caused a genuine memory-exhaustion incident on a real overnight run, shipped a remediation (raised the process memory ceiling, tightened task concurrency, added automated failure alerting, wired an idle health-check into a real recovery loop), then proved it clean on a subsequent unattended production run with zero restarts.
+- **Closes the loop on its own forecasts** — generated predictions are later checked against what actually happened and against an independent, market-based accuracy signal, and the results feed back into how the system reports going forward, rather than only ever producing new output.
+- **A claim is only published if it's backed by real evidence.** If the model can't cite genuine support for something it wants to say, the system runs its own targeted search and independently checks whether what it found actually supports that *specific* claim — and drops the claim entirely rather than publish it unsupported if nothing checks out.
+- **Every tracked asset gets a full scheduled refresh at least once a night, and can be refreshed on demand.** An operator can trigger an out-of-schedule update for a single asset or the whole watchlist through the same entry point the nightly run uses — useful the moment something newsworthy breaks instead of waiting for the next cycle.
+- **Catalysts are tracked as ongoing threads, not one-off mentions.** A developing story — a piece of pending legislation, a corporate partnership, a macro event — is followed as a single evolving thread across nights instead of being re-reported as a disconnected new item every time coverage updates, and it's automatically resolved once the real-world outcome is confirmed.
+- **Has run a full production watchlist of up to ~50 assets across equities, ETFs, and crypto in a single nightly cycle** — watchlist size is an operator setting, not a hard architectural ceiling.
 - **Survived a real cascade failure** (a component that pinned every core past 1000% CPU) and turned it into a permanent architectural rule, not a patch.
-- **Built in verified layers** — core capability layers plus three end-to-end "stability gates," each proven with a real production run before the next began.
-- **Everything version-controlled and audited against reality** — living docs are periodically re-checked against the running system, and any drift is treated as a defect.
+- **Built in verified layers** — core capability layers plus multiple end-to-end "stability gates," each proven with a real production run before the next began.
+- **Everything version-controlled and audited against reality** — living docs are periodically re-checked against the running system, and any drift — including in the data the system persists, not just its documentation — is treated as a defect and fixed, not just logged.
 
 *(Each bullet expands into a full section below.)*
 
@@ -63,6 +68,23 @@ A few numbers that tend to prompt the follow-up questions:
 - Drafts, edits, and *versions* research reports as new information arrives — reports are living documents, not one-shot outputs.
 - Renders finished reports to portable formats (PDF/DOCX) through a containerized rendering service and distributes them on demand or on a schedule.
 
+**Evidence verification & false-information guards**
+- No claim is published on the model's say-so alone: every catalyst and forecast branch must cite specific supporting evidence, or the system runs an independent, targeted search and only attaches what it finds if a separate adjudication step confirms the result genuinely supports that *specific* claim — not just that it's topically related. If nothing checks out, the claim is dropped. "No evidence for this" is a valid, expected outcome, not a gap papered over with plausible-sounding filler.
+- A second, independent validation pass runs after generation and checks the output against hard rules — required fields present, only valid category/outcome values used, internal narrative-vs-number consistency (a claimed "increase" can't be attached to a cited decrease), and no duplicate or unsupported claims slipping through.
+- Source relevance is enforced per asset class, so a generic public data source is only cited when it's actually relevant to the asset being analyzed, rather than getting attached indiscriminately.
+- Ingested market and fundamentals data is checked for plausibility on the way in — an implausible day-over-day jump in a reported figure is flagged and suppressed rather than silently propagating into every downstream calculation that depends on it.
+
+**Catalyst tracking & cross-referencing**
+- Tracks multiple distinct categories of market-moving events per asset — political/regulatory, macro-economic, pending legislation, and corporate/ecosystem developments (partnerships, competitive ties, M&A) — plus a separate global/macro layer for events that affect many assets at once rather than just one.
+- A developing story is tracked as a single evolving thread carrying its own running confidence level and source history, so continuing coverage updates the existing thread instead of spawning a new, disconnected entry every time the story moves.
+- Each catalyst carries an explicit duration classification (how long the underlying dynamic is expected to matter) and is eventually resolved — marked as having played out, stalled, or been disproven — rather than just aging out silently.
+- When a catalyst names another tracked asset (a partnership, a supply-chain tie, a competitor), that reference links directly to the other asset's own report, so a reader can follow the connection instead of re-researching it themselves.
+
+**Closed-loop forecast evaluation**
+- Every generated forecast is later compared against what actually happened, rather than the system only ever producing new predictions with no feedback path.
+- Cross-checks its own predictive claims against an independent, market-based signal (a public prediction-market feed) as an outside sanity check on forecast quality, alongside the system's own internal accuracy tracking.
+- A structured event-resolution process determines whether a previously flagged catalyst played out, stalled, or was disproven, and folds that outcome back into the historical record that later reports and analysis draw on.
+
 **Live demo — scorecard viewer**
 - A sanitized, single-file HTML viewer for the scoring pipeline's output lives in [`demo/investment-scorecard.html`](demo/investment-scorecard.html). It is a bring-your-own-backend static page: point it at your own webhook endpoint and it renders the full category scorecard, weighted-contribution and radar charts, raw metrics, and risk flags. No endpoints, credentials, or proprietary scoring data are embedded.
 
@@ -81,7 +103,7 @@ Automation is not a feature bolted onto this system — it is the operating mode
   - a **nightly market-and-fundamentals run** that walks the active watchlist one asset at a time — pulling price, fundamentals, and filing data, computing derived indicators locally, and writing everything to cache;
   - a **weekly macroeconomic refresh** that scores the prevailing market regime;
   - a **daily maintenance pass** that prunes transient content, enforces retention on the vector store, and compacts storage when needed.
-- **Event-driven / on-demand (routed).** Chat messages, webhooks, and form submissions all arrive at a single orchestrator that classifies intent and dispatches to the correct agent — so supporting a new request type is a routing rule, not a new front door.
+- **Event-driven / on-demand (routed).** Chat messages, webhooks, and form submissions all arrive at a single orchestrator that classifies intent and dispatches to the correct agent — so supporting a new request type is a routing rule, not a new front door. The same entry point also lets an operator trigger a full, out-of-schedule refresh for one asset or the entire watchlist — the identical pipeline the nightly run uses, just invoked on demand rather than waiting for the clock.
 
 **Orchestrated, not merely scheduled.** The orchestrator does more than dispatch. A concurrency guard checks whether a heavy job is already running before starting another; when the system is busy, work is queued and the caller receives an estimated wait rather than an overload. Heavy tasks execute strictly sequentially — which is precisely what makes the system safe to leave running unattended on modest hardware.
 
@@ -89,7 +111,9 @@ Automation is not a feature bolted onto this system — it is the operating mode
 
 **Safe to re-run (idempotent by design).** The data pipeline is incremental and freshness-checked: re-running it does not duplicate work or waste API budget, because each step inspects what is already cached and fetches only what changed. Jobs that share a rate-limited credential are scheduled in non-overlapping windows so they never collide.
 
-**Self-healing operation.** The system is built to recover on its own: containers restart automatically after a failure, a memory watchdog raises an alert under pressure, and a post-restart health check verifies database connectivity and data completeness before the system is trusted again. A single reusable notification component centralizes all operational alerts — errors, threshold breaches, and health-check results. The design goal is that a transient failure in the middle of the night resolves itself and leaves an audit trail, rather than waiting for someone to notice.
+**Self-healing operation.** The system is built to recover on its own: containers restart automatically after a failure, a memory watchdog raises an alert under pressure, and a post-restart health check verifies database connectivity and data completeness before the system is trusted again. A single reusable notification component centralizes all operational alerts — errors, threshold breaches, and health-check results. The design goal is that a transient failure in the middle of the night resolves itself and leaves an audit trail, rather than waiting for someone to notice. **This was proven against a real incident, not just designed on paper**: a genuine out-of-memory crash on a live overnight run was root-caused, remediated (higher memory ceiling, tighter concurrency, automated error alerting, a health-check wired to an actual recovery action instead of just logging), and then verified clean across a subsequent full unattended production run with zero container restarts.
+
+**Role-gated multi-user access.** The operator-facing dashboard supports authenticated accounts with standard/admin roles, so reporting surfaces can be shared with more than one person without giving everyone the same level of access.
 
 ---
 
@@ -97,10 +121,15 @@ Automation is not a feature bolted onto this system — it is the operating mode
 
 - **Resilience engineering under hard resource limits.** The system was originally designed to run reliably on a small, memory-constrained single server. That drove a layered mitigation stack — immediate model unloading, strictly sequential heavy-task execution, per-container memory limits, a guard that prevents concurrent heavy jobs from overlapping, and bounded context growth — all so the box degrades gracefully instead of failing under load. (The hardware has since been upgraded, but the discipline remains and the design still holds.)
 - **Intellectual-property abstraction layer.** Where reasoning tasks touch a hosted model, the work is decomposed so that no single external call ever sees the proprietary methodology as a whole — sensitive synthesis is kept local, and external calls receive only abstracted, decomposed sub-tasks. Data sourcing follows the same principle.
-- **Modular, gated build methodology.** The platform was built in progressive layers, each with an explicit stability "gate" that had to be verified end-to-end before the next layer began — a Modular Open Systems Architecture approach adapted to an AI-agent stack. Core capability layers plus three verification gates are all published and verified end-to-end.
-- **Verification is first-class.** Every gate and vertical was proven with a real production run, not just a unit test — several latent bugs (a silent input-truncation setting, stale sub-workflow references, mis-wired credentials, wrong content-type headers, cross-network container isolation) were caught precisely because "done" meant "observed working in production."
+- **Modular, gated build methodology.** The platform was built in progressive layers, each with an explicit stability "gate" that had to be verified end-to-end before the next layer began — a Modular Open Systems Architecture approach adapted to an AI-agent stack. Core capability layers plus multiple verification gates are all published and verified end-to-end.
+- **Verification is first-class.** Every gate and vertical was proven with a real production run, not just a unit test — recurring classes of latent bugs (silent input-truncation, stale references, silent partial-batch processing that only touched the first item in a multi-item run, database type-coercion edge cases) were caught precisely because "done" meant "observed working in production," including a full data-integrity recovery effort that root-caused why a subset of forecast data had been silently failing to persist for weeks and rebuilt the pipeline to recover it.
 - **Documentation-as-source-of-truth, kept honest.** The system carries a living technical report, an operations/maintenance plan, and a deferred-items register — and these are periodically audited *against the running system* rather than trusted blindly, with drift between docs and reality treated as a defect to be logged and corrected.
 - **Everything version-controlled.** Workflow definitions, migrations, the rendering service, and all supporting documentation live in git; nothing important exists as a loose, unrecoverable file.
+- **Defense in depth on data quality, not one gate.** No single check is trusted to catch everything: evidence-gating at generation time, a separate rules-based validation pass after generation, per-asset-class source-relevance filtering, and a recurring scheduled audit sweep that keeps re-checking already-published data all run independently — so a failure in one layer doesn't mean nothing catches the problem.
+- **Root-cause discipline over quick patches.** Fixes are traced to their actual mechanism against real captured data — reading the underlying data-layer behavior directly rather than guessing from symptoms — even when that takes longer than a plausible-looking patch would have.
+- **Fixes are proven at small scale before being trusted at full scale.** A change is verified against a minimal real sample first and only rolled out to the full watchlist once that sample is clean, rather than validated once and assumed to hold at scale.
+- **Forward-only correction, not silent rewriting of history.** When a fix changes what a report would say, already-published reports are left as they were rather than silently rewritten; the fix takes effect on the next natural regeneration, so historical output stays an honest record of what was actually published at the time.
+- **A recurring, scheduled self-audit — not just one-time testing.** A dedicated automated sweep re-checks already-published output on an ongoing basis, catching drift (a source going stale, a citation rule regressing) after launch, not only during initial build-and-verify.
 
 ---
 
@@ -146,12 +175,13 @@ The result is a platform that was engineered to **degrade gracefully instead of 
 
 ## Roadmap & Future Integrations
 
-- **Deeper analytical layer** — a second-generation scoring rubric adding more analytical depth, followed by its implementation once designed.
 - **Full video-transcription path** — replacing the retired local transcription component with a sustainable service so audio-only sources are covered.
 - **External / subscriber delivery** — extending the automated vertical jobs from owner-only mailboxes to external recipients and free-funnel distribution, turning research output into products.
 - **Additional structured-signal coverage** — bringing more chart-only and otherwise non-feed sources into the pipeline.
 - **Entry/exit decision framework with paper trading** — a risk-managed execution layer validated against a paper-trading broker, activated only after a multi-month analytical track record exists.
-- **Macro & market-timing context** — richer global-session and macro-event overlays feeding the technical scoring.
+- **Latency-optimized nightly processing** — restructuring the nightly batch job so reports compose progressively per-asset instead of waiting on the single slowest item in the run, as the watchlist has scaled up.
+
+*(Since the prior version of this document: a macro-event and prediction-market-verification layer, and a closed-loop forecast-accuracy evaluation system, both moved from roadmap into the live "Core Capabilities" above.)*
 
 ---
 
@@ -169,11 +199,12 @@ The result is a platform that was engineered to **degrade gracefully instead of 
 | Document rendering | Pandoc + HTML-to-PDF engine (containerized service) |
 | OCR | Tesseract via a lightweight HTTP service |
 | Hosted model (selective) | A hosted mid-tier model for heavier reasoning tasks |
+| Self-hosted search | Self-hosted metasearch, used to backfill supporting evidence for evidence-thin claims before they're published |
 
 
 ---
 
-*Prepared 2026-07-09 from the internal system report and project index. Infrastructure identifiers, credentials, proprietary scoring methodology, and personal data are deliberately omitted.*
+*Prepared 2026-07-09, updated 2026-08-05, from the internal system report and project index. Infrastructure identifiers, credentials, proprietary scoring methodology, and personal data are deliberately omitted.*
 
 ---
 
