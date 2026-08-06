@@ -68,7 +68,8 @@ A few numbers that tend to prompt the follow-up questions:
 - Source relevance is enforced per asset class, so a generic public data source is only cited when it's actually relevant to the asset being analyzed, rather than getting attached indiscriminately.
 - Ingested market and fundamentals data is checked for plausibility on the way in — an implausible day-over-day jump in a reported figure is flagged and suppressed rather than silently propagating into every downstream calculation that depends on it.
 
-**[Screenshot: Evidence Summary tab — 33 verified sources split into Government & Official and Non-Government]**
+<img width="1026" height="1560" alt="image" src="https://github.com/user-attachments/assets/8ae538bf-0644-40f0-bef2-68b3cbe1b65f" />
+
 *A real dossier's full citation trail — every source either a primary SEC filing or a dated, named publication. Nothing is asserted without a link back to where it came from.*
 
 **Catalyst tracking & cross-referencing**
