@@ -78,7 +78,8 @@ A few numbers that tend to prompt the follow-up questions:
 - Each catalyst carries an explicit duration classification (how long the underlying dynamic is expected to matter) and is eventually resolved — marked as having played out, stalled, or been disproven — rather than just aging out silently.
 - When a catalyst names another tracked asset (a partnership, a supply-chain tie, a competitor), that reference links directly to the other asset's own report, so a reader can follow the connection instead of re-researching it themselves.
 
-**[Screenshot: Supply Chain and Ecosystem tab — a tracked asset linked to other tracked assets as ecosystem ties]**
+<img width="1047" height="828" alt="image" src="https://github.com/user-attachments/assets/7854a99b-dae4-4cc4-9fa8-cea5d37f5bee" />
+
 *Real cross-asset ties, not a static "related tickers" widget — each connection carries its own relationship type (competitor dependency, strategic partner) and a cited reason, and clicking through opens that asset's own report.*
 
 **Closed-loop forecast evaluation**
@@ -86,10 +87,12 @@ A few numbers that tend to prompt the follow-up questions:
 - Cross-checks its own predictive claims against an independent, market-based signal (a public prediction-market feed) as an outside sanity check on forecast quality, alongside the system's own internal accuracy tracking.
 - A structured event-resolution process determines whether a previously flagged catalyst played out, stalled, or was disproven, and folds that outcome back into the historical record that later reports and analysis draw on.
 
-**[Screenshot: Forecast tab — three time horizons (0-30, 31-90, 91-180 days), each with Base/Bear/Bull scenarios]**
+<img width="1021" height="1675" alt="image" src="https://github.com/user-attachments/assets/08b3a084-3df0-4d2a-a816-102492c2027b" />
+
 *Every forecast is scenario-based and time-boxed, not a single point prediction — three horizons, three outcomes each, and every one of them traceable back to a specific cited source.*
 
-**[Screenshot: Evolution tab — version-over-version comparison, benchmark chart, and version timeline]**
+<img width="918" height="1747" alt="image" src="https://github.com/user-attachments/assets/58c3fca5-7f8b-4b8e-8c8f-756ff2fb00f5" />
+
 *A real revision, explained in plain language: this version's changes from the last one, why they happened, plotted against a benchmark, with the full version history underneath it.*
 
 **Automation & delivery**
@@ -109,7 +112,8 @@ Automation is not a feature bolted onto this system — it is the operating mode
   - a **daily maintenance pass** that prunes transient content, enforces retention on the vector store, and compacts storage when needed.
 - **Event-driven / on-demand (routed).** Chat messages, webhooks, and form submissions all arrive at a single orchestrator that classifies intent and dispatches to the correct agent — so supporting a new request type is a routing rule, not a new front door. The same entry point also lets an operator trigger a full, out-of-schedule refresh for one asset or the entire watchlist — the identical pipeline the nightly run uses, just invoked on demand rather than waiting for the clock.
 
-**[Screenshot: Historical Forecasts tab — real version list with timestamps, including two same-day updates]**
+<img width="1043" height="957" alt="image" src="https://github.com/user-attachments/assets/6e0c1e52-a8cc-47e1-a16d-6633a38d62ae" />
+
 *A real version history — daily refreshes as the baseline, plus genuine same-day updates (two versions in one day here) proving the on-demand path is actually used, not just theoretically available.*
 
 **Orchestrated, not merely scheduled.** The orchestrator does more than dispatch. A concurrency guard checks whether a heavy job is already running before starting another; when the system is busy, work is queued and the caller receives an estimated wait rather than an overload. Heavy tasks execute strictly sequentially — which is precisely what makes the system safe to leave running unattended on modest hardware.
