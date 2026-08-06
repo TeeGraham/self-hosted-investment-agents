@@ -68,7 +68,7 @@ A few numbers that tend to prompt the follow-up questions:
 - Source relevance is enforced per asset class, so a generic public data source is only cited when it's actually relevant to the asset being analyzed, rather than getting attached indiscriminately.
 - Ingested market and fundamentals data is checked for plausibility on the way in — an implausible day-over-day jump in a reported figure is flagged and suppressed rather than silently propagating into every downstream calculation that depends on it.
 
-![Evidence Summary tab for a real dossier, showing 33 verified sources split into Government & Official (SEC EDGAR filings) and Non-Government (dated financial press)](PASTE_EVIDENCE_SUMMARY_SCREENSHOT_URL_HERE)
+**[Screenshot: Evidence Summary tab — 33 verified sources split into Government & Official and Non-Government]**
 *A real dossier's full citation trail — every source either a primary SEC filing or a dated, named publication. Nothing is asserted without a link back to where it came from.*
 
 **Catalyst tracking & cross-referencing**
@@ -77,7 +77,7 @@ A few numbers that tend to prompt the follow-up questions:
 - Each catalyst carries an explicit duration classification (how long the underlying dynamic is expected to matter) and is eventually resolved — marked as having played out, stalled, or been disproven — rather than just aging out silently.
 - When a catalyst names another tracked asset (a partnership, a supply-chain tie, a competitor), that reference links directly to the other asset's own report, so a reader can follow the connection instead of re-researching it themselves.
 
-![Supply Chain and Ecosystem tab showing a tracked asset linked to other tracked assets as ecosystem ties, each with a relationship type and cited reasoning](PASTE_SUPPLY_CHAIN_ECOSYSTEM_SCREENSHOT_URL_HERE)
+**[Screenshot: Supply Chain and Ecosystem tab — a tracked asset linked to other tracked assets as ecosystem ties]**
 *Real cross-asset ties, not a static "related tickers" widget — each connection carries its own relationship type (competitor dependency, strategic partner) and a cited reason, and clicking through opens that asset's own report.*
 
 **Closed-loop forecast evaluation**
@@ -85,10 +85,10 @@ A few numbers that tend to prompt the follow-up questions:
 - Cross-checks its own predictive claims against an independent, market-based signal (a public prediction-market feed) as an outside sanity check on forecast quality, alongside the system's own internal accuracy tracking.
 - A structured event-resolution process determines whether a previously flagged catalyst played out, stalled, or was disproven, and folds that outcome back into the historical record that later reports and analysis draw on.
 
-![Forecast tab showing three time horizons — 0-30, 31-90, and 91-180 days — each with Base, Bear, and Bull scenarios, price bands, probabilities, and evidence-linked reasoning](PASTE_FORECAST_SCENARIOS_SCREENSHOT_URL_HERE)
+**[Screenshot: Forecast tab — three time horizons (0-30, 31-90, 91-180 days), each with Base/Bear/Bull scenarios]**
 *Every forecast is scenario-based and time-boxed, not a single point prediction — three horizons, three outcomes each, and every one of them traceable back to a specific cited source.*
 
-![Evolution tab showing a version-over-version comparison — source counts, catalyst branch counts, and a plain-language explanation of what changed and why — alongside a benchmark comparison chart and a version timeline](PASTE_EVOLUTION_TAB_SCREENSHOT_URL_HERE)
+**[Screenshot: Evolution tab — version-over-version comparison, benchmark chart, and version timeline]**
 *A real revision, explained in plain language: this version's changes from the last one, why they happened, plotted against a benchmark, with the full version history underneath it.*
 
 **Automation & delivery**
@@ -108,7 +108,7 @@ Automation is not a feature bolted onto this system — it is the operating mode
   - a **daily maintenance pass** that prunes transient content, enforces retention on the vector store, and compacts storage when needed.
 - **Event-driven / on-demand (routed).** Chat messages, webhooks, and form submissions all arrive at a single orchestrator that classifies intent and dispatches to the correct agent — so supporting a new request type is a routing rule, not a new front door. The same entry point also lets an operator trigger a full, out-of-schedule refresh for one asset or the entire watchlist — the identical pipeline the nightly run uses, just invoked on demand rather than waiting for the clock.
 
-![Historical Forecasts tab showing a real version list with timestamps, including two same-day updates](PASTE_HISTORICAL_FORECASTS_SCREENSHOT_URL_HERE)
+**[Screenshot: Historical Forecasts tab — real version list with timestamps, including two same-day updates]**
 *A real version history — daily refreshes as the baseline, plus genuine same-day updates (two versions in one day here) proving the on-demand path is actually used, not just theoretically available.*
 
 **Orchestrated, not merely scheduled.** The orchestrator does more than dispatch. A concurrency guard checks whether a heavy job is already running before starting another; when the system is busy, work is queued and the caller receives an estimated wait rather than an overload. Heavy tasks execute strictly sequentially — which is precisely what makes the system safe to leave running unattended on modest hardware.
