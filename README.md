@@ -200,7 +200,6 @@ The result is a platform that was engineered to **degrade gracefully instead of 
 
 | Layer | Technology |
 |---|---|
-
 | Local LLM runtime | Ollama (CPU inference) |
 | Embeddings | Local embedding model, no external exposure |
 | Vector database | Qdrant |
@@ -211,7 +210,6 @@ The result is a platform that was engineered to **degrade gracefully instead of 
 | OCR | Tesseract via a lightweight HTTP service |
 | Hosted model (selective) | A hosted mid-tier model for heavier reasoning tasks |
 | Self-hosted search | Self-hosted metasearch, used to backfill supporting evidence for evidence-thin claims before they're published |
-
 
 ---
 
