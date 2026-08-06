@@ -1,11 +1,5 @@
 # Self-Hosted Multi-Agent Investment Research Platform — Capability Summary
 
-Current View on the live data score cards:
-https://gyazo.com/e64daa9786d603b8c314781136e4e213
-
-<img width="1492" height="578" alt="Scorecard Image" src="https://github.com/user-attachments/assets/f2f81509-a771-4fea-9df8-f8f490e1bbbd" />
-
-
 > **Purpose of this document.** A sanitized, portfolio-facing overview of a system I designed, built, and operate. It describes *what the system does and how it is engineered* without exposing infrastructure addresses, credentials, proprietary scoring methodology, or client data. Intended for sharing with prospective employers or collaborators.
 
 ---
@@ -74,19 +68,28 @@ A few numbers that tend to prompt the follow-up questions:
 - Source relevance is enforced per asset class, so a generic public data source is only cited when it's actually relevant to the asset being analyzed, rather than getting attached indiscriminately.
 - Ingested market and fundamentals data is checked for plausibility on the way in — an implausible day-over-day jump in a reported figure is flagged and suppressed rather than silently propagating into every downstream calculation that depends on it.
 
+![Evidence Summary tab for a real dossier, showing 33 verified sources split into Government & Official (SEC EDGAR filings) and Non-Government (dated financial press)](PASTE_EVIDENCE_SUMMARY_SCREENSHOT_URL_HERE)
+*A real dossier's full citation trail — every source either a primary SEC filing or a dated, named publication. Nothing is asserted without a link back to where it came from.*
+
 **Catalyst tracking & cross-referencing**
 - Tracks multiple distinct categories of market-moving events per asset — political/regulatory, macro-economic, pending legislation, and corporate/ecosystem developments (partnerships, competitive ties, M&A) — plus a separate global/macro layer for events that affect many assets at once rather than just one.
 - A developing story is tracked as a single evolving thread carrying its own running confidence level and source history, so continuing coverage updates the existing thread instead of spawning a new, disconnected entry every time the story moves.
 - Each catalyst carries an explicit duration classification (how long the underlying dynamic is expected to matter) and is eventually resolved — marked as having played out, stalled, or been disproven — rather than just aging out silently.
 - When a catalyst names another tracked asset (a partnership, a supply-chain tie, a competitor), that reference links directly to the other asset's own report, so a reader can follow the connection instead of re-researching it themselves.
 
+![Supply Chain and Ecosystem tab showing a tracked asset linked to other tracked assets as ecosystem ties, each with a relationship type and cited reasoning](PASTE_SUPPLY_CHAIN_ECOSYSTEM_SCREENSHOT_URL_HERE)
+*Real cross-asset ties, not a static "related tickers" widget — each connection carries its own relationship type (competitor dependency, strategic partner) and a cited reason, and clicking through opens that asset's own report.*
+
 **Closed-loop forecast evaluation**
 - Every generated forecast is later compared against what actually happened, rather than the system only ever producing new predictions with no feedback path.
 - Cross-checks its own predictive claims against an independent, market-based signal (a public prediction-market feed) as an outside sanity check on forecast quality, alongside the system's own internal accuracy tracking.
 - A structured event-resolution process determines whether a previously flagged catalyst played out, stalled, or was disproven, and folds that outcome back into the historical record that later reports and analysis draw on.
 
-**Live demo — scorecard viewer**
-- A sanitized, single-file HTML viewer for the scoring pipeline's output lives in [`demo/investment-scorecard.html`](demo/investment-scorecard.html). It is a bring-your-own-backend static page: point it at your own webhook endpoint and it renders the full category scorecard, weighted-contribution and radar charts, raw metrics, and risk flags. No endpoints, credentials, or proprietary scoring data are embedded.
+![Forecast tab showing three time horizons — 0-30, 31-90, and 91-180 days — each with Base, Bear, and Bull scenarios, price bands, probabilities, and evidence-linked reasoning](PASTE_FORECAST_SCENARIOS_SCREENSHOT_URL_HERE)
+*Every forecast is scenario-based and time-boxed, not a single point prediction — three horizons, three outcomes each, and every one of them traceable back to a specific cited source.*
+
+![Evolution tab showing a version-over-version comparison — source counts, catalyst branch counts, and a plain-language explanation of what changed and why — alongside a benchmark comparison chart and a version timeline](PASTE_EVOLUTION_TAB_SCREENSHOT_URL_HERE)
+*A real revision, explained in plain language: this version's changes from the last one, why they happened, plotted against a benchmark, with the full version history underneath it.*
 
 **Automation & delivery**
 - Runs most of its work unattended on schedules, and packages finished output as automatically delivered "vertical" products. *(Covered in depth in the next section.)*
@@ -105,6 +108,9 @@ Automation is not a feature bolted onto this system — it is the operating mode
   - a **daily maintenance pass** that prunes transient content, enforces retention on the vector store, and compacts storage when needed.
 - **Event-driven / on-demand (routed).** Chat messages, webhooks, and form submissions all arrive at a single orchestrator that classifies intent and dispatches to the correct agent — so supporting a new request type is a routing rule, not a new front door. The same entry point also lets an operator trigger a full, out-of-schedule refresh for one asset or the entire watchlist — the identical pipeline the nightly run uses, just invoked on demand rather than waiting for the clock.
 
+![Historical Forecasts tab showing a real version list with timestamps, including two same-day updates](PASTE_HISTORICAL_FORECASTS_SCREENSHOT_URL_HERE)
+*A real version history — daily refreshes as the baseline, plus genuine same-day updates (two versions in one day here) proving the on-demand path is actually used, not just theoretically available.*
+
 **Orchestrated, not merely scheduled.** The orchestrator does more than dispatch. A concurrency guard checks whether a heavy job is already running before starting another; when the system is busy, work is queued and the caller receives an estimated wait rather than an overload. Heavy tasks execute strictly sequentially — which is precisely what makes the system safe to leave running unattended on modest hardware.
 
 **Automated "verticals" — the productization layer.** On top of the core engine sits a registry of independently scheduled jobs — digests, monitors, and data exports — each on its own cadence (daily, weekly, or event-driven). Each composes existing agents into a finished, delivered output with zero manual steps. This is the substrate for turning a personal research engine into repeatable products: a new offering is a newly registered job, not a rebuilt platform. Several are live today and deliver on their own schedules.
@@ -113,7 +119,7 @@ Automation is not a feature bolted onto this system — it is the operating mode
 
 **Self-healing operation.** The system is built to recover on its own: containers restart automatically after a failure, a memory watchdog raises an alert under pressure, and a post-restart health check verifies database connectivity and data completeness before the system is trusted again. A single reusable notification component centralizes all operational alerts — errors, threshold breaches, and health-check results. The design goal is that a transient failure in the middle of the night resolves itself and leaves an audit trail, rather than waiting for someone to notice. **This was proven against a real incident, not just designed on paper**: a genuine out-of-memory crash on a live overnight run was root-caused, remediated (higher memory ceiling, tighter concurrency, automated error alerting, a health-check wired to an actual recovery action instead of just logging), and then verified clean across a subsequent full unattended production run with zero container restarts.
 
-**Role-gated multi-user access.** The operator-facing dashboard supports authenticated accounts with standard/admin roles, so reporting surfaces can be shared with more than one person without giving everyone the same level of access.
+**Role-gated multi-user access.** The operator-facing dashboard supports authenticated accounts with standard/admin roles, so reporting surfaces can be shared with more than one person without giving everyone the same level of access. This replaced an earlier standalone, bring-your-own-backend demo page as the platform matured — the dashboard is now the one interface, not a public demo plus a separate real product.
 
 ---
 
